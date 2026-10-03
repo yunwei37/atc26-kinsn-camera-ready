@@ -1,0 +1,36 @@
+\section{Implementation}
+\label{sec:implementation}
+
+We implement \tool in the Linux eBPF pipeline on x86-64 and ARM64. The implementation has three parts: common kernel integration code, a userspace pattern recognizer, and loadable kernel modules that package operation implementations. The common code connects the existing verifier and JIT; each operation module provides both an expansion function and a native-code emitter.
+
+\subsection{Kernel Integration}
+\label{subsec:kernel}
+
+Extended instructions reuse the eBPF instruction-slot format so that they can be loaded alongside ordinary bytecode. A \kinsn occupies two adjacent slots: a sidecar carrying operation parameters, such as registers and immediates, followed by a call identifying the operation descriptor. We use Linux's BTF/kfunc registration mechanism~\cite{kfuncs} to locate operations. In the kernel, \texttt{struct bpf\_kop} associates an expansion function with architecture-specific native-code emitters and output-length limits. Operation modules register these descriptors when loaded; one module can register multiple descriptors for different widths or operand forms. The call selects an implementation at compilation time; the resulting program need not call a kernel function that wraps the operation.
+
+The common code maintains the correspondence between \kinsns and their expanded regions across verification. During expansion, the kernel records the operation identifier, parameters, and replaced region, checks the expansion's length and permitted instruction forms, and replaces the \kinsn with ordinary eBPF instructions. Nested extensions, function calls, and program exits are not allowed within an expansion. After verification, restoration uses these records to reconstruct the \kinsns and adjusts branch offsets affected by changes in instruction count. We add support for invoking native-code emitters to both the x86-64 and ARM64 JITs, incorporating the generated code into their existing length calculation and code layout. Ordinary eBPF instructions continue through the existing JIT handling.
+
+The common kernel changes cover processing before and after verification, module registration, and the two architectures' JIT interfaces, as shown in Table~\ref{tab:kernel-loc}. Operation-specific expansion and code generation reside in modules, while pattern matching remains in userspace. The kernel changes in the table therefore need not grow with every recognition rule. New operations still add module code that requires review; \S\ref{subsec:operations} illustrates this work with a concrete example.
+
+\input{tables/sec-5-kernel-loc}
+
+\subsection{Userspace Pattern Recognizer}
+\label{subsec:llvm}
+
+The pattern recognizer provides two matching points, within the compiler and on encoded bytecode, to use information retained at different stages. The pattern recognizer in our modified LLVM BPF backend matches data dependencies in its internal \texttt{MachineInstr} representation and generates extension pseudo-instructions, which the output stage encodes as \kinsns. Some addressing combinations are matched after register allocation. The bytecode pattern recognizer reads compiled eBPF instructions directly and recovers operations that extensions can express, including in programs that have not passed through the modified backend. The two can run in sequence: the former selects operations retained during compilation, and the latter finds additional combinations in the final bytecode. The current ARM64 configuration uses bytecode recognition.
+
+A recognition rule must both match the computation and check that the replacement preserves program behavior. For example, a rotation rule checks that two shifts use the same input, their amounts are complementary, and their results are combined with bitwise OR. If the replacement omits a write to a temporary register, the rule also checks whether later code uses that value. After a match, the pattern recognizer encodes the input, output, and rotation amount in an existing rotation \kinsn. Enabling the rule also depends on the target architecture's implementations and the optimization policy: a replaceable pattern does not necessarily become faster after replacement. These functional-correctness checks differ from the kernel safety checks in \S\ref{subsec:safety}.
+
+\subsection{Implemented Operations}
+\label{subsec:descriptors}
+\label{subsec:operations}
+\label{sec:lang}
+\label{subsec:adding}
+
+The extension interface expresses reusable computation or memory-access semantics, allowing the same native implementation to serve different code patterns. Rotation, bit extraction, and big-endian loads in \S\ref{sec:characterization} illustrate opportunities to combine shifts and logical operations, access bit fields, and fuse loads with byte-order conversion. Conditional selection, bulk memory access, and address calculation extend these opportunities to branches, consecutive memory accesses, and addressing computations. We implement operations for these combinations so that userspace can directly select more compact native sequences. We also implement prefetch operations that hint to the processor which addresses may be accessed later. These add cache hints to the original computation and expand to an eBPF no-op.
+
+Table~\ref{tab:descriptors} summarizes representative computations and native implementations for seven optimization categories. Operation semantics determine what must be expressed, while the target architecture determines how to implement it. A \kinsn can therefore generate multiple native instructions, and an optimization category can use several \kinsn variants. For example, native conditional selection requires setting a condition and selecting a result. The current ARM64 implementation represents these steps with separate TST and CSEL descriptors registered by the same kernel module. They must be used as a related sequence because CSEL consumes the condition flags set by TST. A module packages implementations; it does not correspond one-to-one with an optimization category, a \kinsn, or a native instruction.
+
+\input{tables/sec-5-operations}
+
+Adding an operation primarily requires implementing the two instruction sequences and establishing their correspondence. For ARM64 bit extraction, for example, the module accepts a register, starting bit, and bit width. The expansion function generates a right shift and a mask operation, the native-code emitter emits the corresponding \texttt{UBFM}, and the descriptor registers both as one operation. This module contains 78 lines of code, including parameter checks, generation of both sequences, and registration. The pattern recognizer then maps matching shift-and-mask patterns to the descriptor. A new equivalent pattern needs only an additional recognition rule; extending the width or parameter range requires updating the expansion, code generation, and proof conditions together. Supporting another architecture can reuse the bit-extraction specification and, if the same eBPF expansion is used, its proof, while adding the architecture's native implementation and proof. These changes concern operation implementations, without adding pattern recognition to the JIT.

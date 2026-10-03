@@ -1,0 +1,76 @@
+%%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
+
+%%% Section 8 Related Work
+
+%%%
+% message<bytecode optimizers stay within the instruction set, \tool grows the operation set>
+% bytecode optimizers improve eBPF programs within the existing instruction set
+% K2 searches for shorter bytecode with stochastic synthesis
+% Merlin rewrites at the LLVM-IR and bytecode levels
+% EPSO applies rewrite rules from offline enumerative superoptimization
+% ePass lifts bytecode into SSA form
+% KFuse merges chains of eBPF programs after verification
+% \tool grows the set of operations available to a program
+
+%%%
+% message<the existing routes to new operations hide semantics or revise the instruction set>
+% the existing routes to new operations are kfuncs and instruction-set extensions
+% a kfunc exposes a kernel function for eBPF programs to call
+% the verifier checks the arguments, the body runs outside the verifier's analysis
+% hXDP extends the instruction set for FPGAs, translated programs run outside the verifier's coverage
+% the eBPF instruction set is an IETF standard, a revision is a standardization effort
+% a \tool operation shows the verifier its full semantics via the proof sequence
+% a new operation ships as a module plus a recognizer pattern, no instruction-set revision
+
+%%%
+% message<other systems move execution or re-found safety, \tool keeps both in place>
+% another line moves where eBPF runs or what its safety rests on
+% bpftime runs eBPF in userspace
+% eBPF for Windows checks with PREVAIL in userspace, loads signed driver modules
+% Craun et al. verify, compile, and sign on a separate host for embedded devices
+% KFlex moves only the extension's own memory safety and termination to runtime checks
+% Rex drops the verifier and accepts extensions written in safe Rust
+% MOAT and SafeBPF add runtime isolation beneath the static checks
+% with \tool, programs stay in the kernel under the existing verifier's load-time check
+% the one addition to the trusted computing base is the native emit
+
+%%%
+% message<verified compilation targets fixed translators, \lang proves per operation>
+% verified compilation provides the techniques behind the \lang proofs
+% CompCert established mechanized semantic preservation for a realistic compiler
+% Alive2 checks refinement for each LLVM transformation
+% Jitk compiles classic BPF through a Coq-verified JIT replacing the seccomp interpreter
+% Jitterbug proves per-instruction eBPF JIT equivalence, JitSynth synthesizes such JITs
+% CertrBPF derives a verified C interpreter for eBPF from a Coq specification
+% all of these systems target a fixed instruction set
+% each \lang operation carries a Lean 4 proof that emit and proof sequence agree
+
+%%%
+% message<where machine-checked proofs sit relative to the kernel>
+% beyond the translators, proofs also target eBPF's verification and loading steps
+% Agni verifies offline the range analysis on whose soundness \tool's safety argument rests
+% BCF supplies proofs from userspace, the kernel checks the proofs at load time
+% \lang's equivalence proofs stay offline as development-time evidence
+% proof-carrying code is the closest ancestor of \tool
+% both admit untrusted code into the kernel only after an in-kernel check
+% PCC installs a new proof checker in the kernel
+% \tool reuses the existing eBPF verifier as the checker
+
+%%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
+
+\section{Related Work}
+\label{sec:related}
+
+\noindent\textbf{eBPF bytecode optimization.}
+Bytecode optimizers improve eBPF programs within the existing instruction set. K2~\cite{xu2021synthesizing} searches for shorter bytecode with stochastic synthesis. Merlin~\cite{mao2024merlin} rewrites programs at the LLVM-IR and bytecode levels. EPSO~\cite{zhu2025epso} applies rewrite rules from offline enumerative superoptimization. ePass~\cite{xiang2025epass} lifts bytecode into SSA form for program transformation. KFuse~\cite{kfuse} merges chains of eBPF programs into one program after verification. \tool grows the set of operations available to a program.
+
+\noindent\textbf{Extending eBPF's operations.}
+The existing routes to new operations are kfuncs and instruction-set extensions. A kfunc exposes a kernel function for eBPF programs to call~\cite{kfuncs}. The verifier checks a kfunc call's arguments against BTF types, and the body runs as native code outside the verifier's analysis. hXDP~\cite{brunella2020hxdp} extends the eBPF instruction set for FPGA targets, and the translated programs run outside the verifier's coverage. The eBPF instruction set is now an IETF standard~\cite{rfc9669}, so a revision is a standardization effort. A \tool operation instead shows the verifier its full semantics, as a proof sequence in the lowered program (\S\ref{subsec:pipeline}). A new operation ships as a kernel module plus a recognizer pattern, with no instruction-set revision (\S\ref{subsec:adding}).
+
+\noindent\textbf{Relocating execution or the safety argument.}
+Another line of work moves where eBPF runs or what its safety rests on. bpftime~\cite{zheng2025extending} runs eBPF programs in userspace. eBPF for Windows~\cite{windows-ebpf} checks programs in userspace with the PREVAIL verifier~\cite{gershuni2019simple} and loads checked programs as signed driver modules. Craun et al.~\cite{craun2023enabling} verify, compile, and sign programs on a separate host for embedded devices. KFlex~\cite{dwivedi2024fast} moves only the extension's own memory safety and termination to runtime checks. Rex~\cite{jia2025rex} drops the verifier and accepts extensions written in safe Rust. MOAT~\cite{lu2024moat} and SafeBPF~\cite{soo2024safebpf} add runtime isolation beneath the verifier's static checks. With \tool, programs stay in the kernel, under the existing verifier's load-time check. Beyond \tool's generic enforcement core, the only per-operation addition to the trusted base is the native emit (\S\ref{subsec:safety}).
+
+\noindent\textbf{Verified compilation and proof-carrying code.}
+Verified compilation provides the techniques behind the \lang proofs. CompCert~\cite{leroy2009formal} established mechanized semantic preservation for a realistic compiler. Alive2~\cite{lopes2021alive2} checks refinement for each LLVM transformation. Jitk~\cite{wang2014jitk} compiles classic BPF through a Coq-verified JIT that replaces the seccomp interpreter path. Jitterbug~\cite{nelson2020specification} proves behavioral equivalence for per-instruction eBPF JIT translation with an SMT solver, and JitSynth~\cite{vangeffen2020jitsynth} synthesizes such verified JITs from interpreter semantics. CertrBPF~\cite{yuan2022certrbpf} derives a verified C implementation of an eBPF interpreter from a Coq specification. All of these systems target a fixed instruction set. Each \lang operation instead carries its own Lean 4 proof that the native emit has the same eBPF-visible effect as its proof sequence (\S\ref{sec:formal-verification}).
+
+Beyond the translators, machine-checked proofs also target eBPF's verification and loading steps. Agni~\cite{vishwanathan2023verifying} verifies offline the eBPF verifier's range analysis, on whose soundness \tool's safety argument rests. BCF~\cite{sun2025prove} supplies abstraction-refinement proofs from userspace, which the kernel checks at load time. \lang's equivalence proofs stay offline, as development-time evidence that never enters the kernel. Proof-carrying code (PCC)~\cite{necula1997pcc} is the closest ancestor of \tool. Both admit untrusted code into the kernel only after an in-kernel check. PCC installs a new proof checker in the kernel. \tool reuses the existing eBPF verifier as the checker.

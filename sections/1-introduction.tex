@@ -1,0 +1,103 @@
+%%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
+
+%%%
+% message<eBPF safely extends the kernel through a verified pipeline ending in a simple JIT>
+% eBPF safely extends OS kernels in domains including networking, observability, security, scheduling
+% the safety comes from a pipeline that verifies every program before execution
+% a compiler lowers to bytecode, the verifier checks it for safety
+% the kernel JIT translates the verified bytecode one opcode at a time
+% the kernel keeps the JIT simple to stay trustworthy
+
+%%%
+% message<the kernel JIT is where eBPF loses performance>
+% the simple kernel JIT, however, is where eBPF loses performance
+% the same C code runs up to twice as slow as compiled directly to native
+% an optimizing compiler on the same verified bytecode recovers almost all of the gap
+% the gap therefore comes from the JIT's per-opcode code generation
+
+%%%
+% message<the clearest losses come from hardware idioms, which arrive decomposed>
+% the clearest losses come from hardware idioms, operations a CPU executes directly
+% the eBPF instruction set has no single-instruction form for these operations
+% optimization happens almost entirely in the userspace compiler
+% even dedicated eBPF optimizers rewrite programs within the instruction set
+% these idioms reach the kernel as multi-instruction sequences, the JIT keeps the spelling
+% a variable-shift rotate arrives as eight bytecode instructions and leaves as 15, native uses one ROL
+
+%%%
+% message<let the simple JIT emit the idioms, an instance of extending a verified pipeline>
+% our response is to let the simple kernel JIT emit the idioms directly
+% the poorly compiled idioms form a small bounded set, a handful of additions suffices
+% the alternative, an in-kernel optimizing compiler, would enlarge the trusted computing base
+% the verifier checks only the bytecode, so a far larger compiler would be trusted
+% such a compiler would also grow per-architecture kernel code
+% emitting idioms instantiates a general problem, extending a verified pipeline with a small trusted base
+
+%%%
+% message<three constraints: safety intact, small one-time change, architecture-independent verification>
+% any such extension must keep eBPF's safety guarantee intact, the verifier still proves every program
+% new operations, however, arrive from untrusted code outside the verifier and JIT
+% the verifier and JIT carry years of analysis and formal verification
+% the kernel change for new operations must therefore stay small and one-time
+% native code is per-architecture, verification stays architecture-independent
+
+%%%
+% message<\tool: each operation is a verifier-checked proof sequence plus a native emit>
+% we present \tool, extending the pipeline with new operations
+% key idea: each operation is a proof sequence the verifier checks plus a native emit the CPU runs
+% a compile-time recognizer rewrites programs to use the new operations
+% the verifier re-checks the proof sequence on every load
+% neither the recognizer nor the proof sequence joins the trusted computing base
+% a recognizer bug therefore cannot make a verified program unsafe
+
+%%%
+% message<\lang is built with \tool; the emit is the one trusted piece, Lean 4 carries the guarantee>
+% with \tool we build \lang, seven hardware-idiom operations
+% the verifier never sees the native emit the CPU runs
+% the native emit is the one addition \tool makes to the trusted computing base
+% we prove in Lean 4 the emit computes the same result as the proof sequence
+
+%%%
+% message<implementation and headline results, operations ship as modules>
+% implemented in the kernel and userspace tooling: core change, recognizer, operation modules
+% \lang speeds up eBPF programs by up to 24% on x86-64 and 22% on ARM64
+% the speedup recovers up to 42% of the gap to native code
+% native code size shrinks 12--23%, the verification procedure is unchanged
+% a new operation ships as a module, the settled safety argument stays untouched
+
+%%%
+% message<contributions>
+% \tool, extending the pipeline with new operations under the existing verifier
+% \lang built with \tool, seven idiom operations the kernel JIT emits directly
+% Lean 4 proof that each native emit computes the same result as its proof sequence
+% implementation in Linux and userspace tooling, evaluation recovers up to 42% of the gap
+
+%%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\label{sec:introduction}
+
+Extended Berkeley Packet Filter (eBPF) safely extends OS kernels in domains including networking~\cite{cilium,katran}, observability~\cite{bpftrace,bcc}, security~\cite{krsi_lwn,tracee}, and scheduling~\cite{sched_ext_lwn}. eBPF's safety comes from a compilation pipeline that verifies every program before execution. A userspace compiler lowers each program to eBPF bytecode, which the in-kernel verifier checks for safety properties such as memory safety and termination. The kernel's just-in-time compiler (the kernel JIT) then translates the verified bytecode to native code one opcode at a time. The kernel keeps the JIT simple to stay trustworthy.
+
+The simple kernel JIT, however, is where eBPF loses performance. The same C code runs up to twice as slow through the pipeline as when compiled directly to native code (\S\ref{sec:characterization}). An optimizing compiler fed the same verified bytecode recovers most of the gap. The gap therefore comes from the kernel JIT's per-opcode code generation.
+
+The clearest losses come from \emph{hardware idioms}, operations that a CPU executes directly, usually as a single instruction. The eBPF instruction set has no single-instruction form for these operations. Optimization happens almost entirely in the userspace compiler. Even dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs within the instruction set. These idioms reach the kernel spelled out as multi-instruction sequences, and the per-opcode kernel JIT keeps the spelling. A 64-bit rotate with a variable shift, a single \texttt{ROL} instruction in native code on x86-64, reaches the kernel JIT as eight bytecode instructions and leaves as 15 machine instructions.
+
+Our response is to let the simple kernel JIT emit these idioms directly, usually as a single native instruction. The idioms the kernel JIT compiles poorly form a small, bounded set, so a handful of additions suffices. One alternative, an optimizing compiler in the kernel, would enlarge the trusted computing base. The verifier checks only the bytecode, so the kernel would have to trust a compiler far larger than the per-opcode kernel JIT. Such a compiler would also grow the kernel code maintained for each architecture. Emitting the idioms is an instance of a more general problem, extending a verified compilation pipeline with new operations while keeping the trusted computing base small.
+
+Any such extension must keep eBPF's safety guarantee intact, with the existing verifier proving every loaded program safe. New operations, however, arrive from untrusted code outside the verifier and the JIT. The verifier and the JIT also carry years of analysis and formal verification~\cite{nelson2020specification,vishwanathan2023verifying}. The kernel change for new operations must therefore stay small and one-time. The native code is specific to each architecture, while the verifier's reasoning must stay architecture-independent.
+
+We present \tool, a mechanism that extends the eBPF compilation pipeline with new operations. Our key idea is to give each operation two forms, a \emph{proof sequence} of vanilla (unextended) eBPF that the existing verifier checks, and a \emph{native emit} that the CPU runs. A compile-time recognizer rewrites programs to use the new operations. The verifier re-checks the proof sequence on every load. Neither the recognizer nor the proof sequence joins the trusted computing base. A recognizer bug therefore cannot make a verified program unsafe.
+
+With \tool, we build \lang, a set of seven hardware-idiom operations, including rotate, conditional select, and bit extract. The verifier never sees the native emit that the CPU runs. The native emit is the only per-operation addition to the trusted computing base. We therefore prove in Lean 4 that, for each operation, the native emit has the same eBPF-visible effect as the proof sequence, carrying the verifier's guarantee to the native code.
+
+We implement \tool in the Linux kernel and in userspace tooling, as a small change to the kernel core, a compile-time recognizer, and kernel modules that supply the operations. \lang speeds up eBPF microbenchmarks by up to 24\% on x86-64 and 22\% on ARM64 over the unmodified pipeline, recovering up to 42\% of the gap to native code, and improves production application throughput by up to 12\%. Native code size shrinks by 12--23\% with no change to the existing verifier analysis (\S\ref{sec:eval}). The same \tool mechanism also supports whole-program native replacement, reaching 2.358$\times$ on Cilium at the cost of trusting the application's native code (\S\ref{subsec:native_upper_bound}). A new operation ships as a kernel module, and the existing verifier analysis stays untouched.
+
+\noindent\textbf{Contributions.}
+We make the following contributions:
+\begin{itemize}
+    \item We present \tool, a mechanism that extends the eBPF compilation pipeline with new operations while reusing the existing verifier for safety (\S\ref{sec:mechanism}).
+    \item With \tool, we build \lang, a set of seven hardware-idiom operations that the simple kernel JIT emits directly (\S\ref{sec:lang}).
+    \item We prove in Lean 4 that each \lang native emit has the same eBPF-visible effect as the proof sequence the verifier checks, so the verifier's guarantee carries over to the native code (\S\ref{sec:formal-verification}).
+    \item An implementation in the Linux kernel and userspace tooling (\S\ref{sec:implementation}) recovers up to 42\% of the eBPF-native gap in our evaluation (\S\ref{sec:eval}).
+\end{itemize}
