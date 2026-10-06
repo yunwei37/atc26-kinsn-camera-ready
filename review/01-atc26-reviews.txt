@@ -1,0 +1,242 @@
+Review #1160A
+Problem clarity
+
+4. 
+Crystal clear
+
+Problem importance
+
+4. 
+Definitely yes
+
+Main idea clarity
+
+4. 
+Crystal clear
+
+Main idea addresses the problem
+
+3. 
+It sounds promising
+
+Related work
+
+4. 
+Sufficient background and context are given
+
+Evaluation appropriate
+
+4. 
+The experimental evaluation is appropriate
+
+R1 Merit
+
+4. 
+Accept (second quintile)
+
+Review #1160B
+Problem clarity
+
+4. 
+Crystal clear
+
+Problem importance
+
+3. 
+Perhaps yes
+
+Main idea clarity
+
+4. 
+Crystal clear
+
+Main idea addresses the problem
+
+3. 
+It sounds promising
+
+Related work
+
+4. 
+Sufficient background and context are given
+
+Evaluation appropriate
+
+4. 
+The experimental evaluation is appropriate
+
+R1 Merit
+
+4. 
+Accept (second quintile)
+
+Comments for authors about extended abstract
+
+BPF-EXT is a trusted peephole optimizer for eBPF - it recognizes certain BPF bytecode sequences and generates single CPU instructions during JIT compilation, giving significant speedups on certain cases.
+
+It seems like a good idea, although of course the paper will need to devote a decent amount of effort to demonstrating that it maintains the security of the original implementation. (and what does this mean: "a bug in the compile-time recognizer that rewrites programs to use the new operations therefore cannot make a verified program unsafe" - that conclusion doesn't seem obvious to me from the text here.
+
+Review #1160C
+Paper summary
+
+This paper introduces a new approach to speeding up eBPF programs: it observes that a decent chunk of eBPF program's overhead comes from it not using efficient hardware idioms and instead replacing them with slower, longer, and more complex series of instructions. The paper confirms this observation empirically and builds a new system (BPF-Ext+KINSN) that allows optimizing eBPF programs so they are executed using these faster idioms instead.
+
+The paper achieves this by adding new eBPF operations that encode these idioms. The operations are recognized and injected by a user space recognizer that is part of the compilation of the eBPF program. These operations encode two components: a proof sequence and a native emit. The first is used by the unmodified eBPF verifier, the second contains the optimized hardware idioms to produce in place of that operation after JIT.
+
+Strengths
+Strong motivation with empirical backing demonstrating that lack of optimizations at the compiler/native instructions level is a key source of overhead in eBPF programs
+Weaknesses
+Paper writing needs urgent improvement
+The benefits on end-to-end loads seem limited and highly volatile depending on policy
+Overall merit
+
+1. 
+Reject
+
+Reviewer expertise
+
+2. 
+Low familiarity: read some papers on the topic but am unfamiliar with major work
+
+Comments for authors
+
+Thank you for your submission.
+
+I enjoyed reading the first chunk of the paper. I thought section 3 was nicely done, and it convinced me that being able to produce optimized native code for eBPF programs is an important challenge that may result in good savings.
+
+However, I found sections 4 to 7 confusing, and it took me several reads and a long time to understand the design and what the key points are. The biggest issue is that much of this writing confuses key design details with implementation or incidental details. The key design insight is (1) recognizing patterns that can be replaced with shorter, more efficient idioms, and (2) having both these short idiom native instructions and proof sequences that are equivalent to them but in plain eBPF; the first is what gets executed by the JIT, the second is what gets consumed by the verifier. To an extent, several of the particular choices you make for how you realize this design are implementation details, e.g., the descriptors being in a kernel module and having this shape, how to lower and restore, etc.
+
+Another confusing factor is that the overall flow of the system, including standalone components, is fragmented between sections 4 and 5. As a result, the text makes a lot of forward and backward references, uses terms or components before they are fully introduced, or places the description of a certain component away from where it is supposed to be described. E.g., the opening paragraph of section 4 says that section 5 presents KINSN, but 4.1 talks about KINSN's rotate, which the reader does not yet know about. The execution paragraph under 4.1 actually has details about verification, etc.
+
+The split between KINSN and BPF-EXT is confusing. I assume the point is to say that the "extended instructions" are a general idea, while KINSN is a particular set of idioms that you identify and support using the pipeline you introduce. However, this could be explained in a much easier to understand way, without introducing two different systems, and without making their descriptions self-referential in both directions. Furthermore, BPF-EXT appears to be the more interesting and generalizable idea or insight, given my reading of the current text, yet the evaluation questions focus on KINSN, other than RQ4, but then, looking at 7.4, the text actually discusses evaluating KINSN as an instantiation!
+
+In addition to the KINSN/BPF-EXT split, the evaluation section contained other confusing descriptions that I was only able to understand after flipping back and forth through many pages and using my imagination. It is much better to be direct and explicit and tell your reader what you want to say, rather than rely on them filling in the blanks. RQ3 talks about a family-selection policy (a new term that had not appeared earlier in the paper), 7.3 talks about the bulk_memory family, which does not appear anywhere else, etc.
+
+The results in Figure 6 left me underwhelmed. The text and motivation had set me up to expect much larger performance gains. Moreover, one of the takeaways I left with is that the policy (i.e., the choice of which sequences to replace with idioms?) is a double-edged sword. The paper, however, does not explain why, and does not help the reader or a practitioner develop an intuition for how they could select (or implement their own) families that would be a good fit for their loads.
+
+This is also true of the micro-benchmark, which shows a modest reduction in a small subset of operations -- which is okay -- but does not explain why, or whether it is indicative of an interesting pattern or insight.
+
+The paper should add a bit more details about the formal verification: you ported existing semantics of native instructions, what about eBPF instructions? did you come up with your own formal semantics? Your lemma that states the eBPF expansion and the native sequence for the same operation refine the same spec crosses over multiple semantics. It sounds like you are using a hardware-independent specs to mediate this. Do you have a translation of the eBPF semantics and the native instruction semantics to that shared specs? Do you have proofs that this translation is correct? is it part of the TCB?
+
+Review #1160D
+Paper summary
+
+This paper presents BPF-ExT, a mechanism to extend the eBPF compilation pipeline with new operations via kernel modules, and evaluates it using a set of hardware-idiom operations called KINSN. The authors aim to improve the performance of eBPF programs by allowing the kernel JIT to emit native instructions directly for specific idioms, rather than compiling long sequences of bytecode.
+
+Strengths
+improveming the performance of eBPF is a hard but important problem;
+adding verified proofs that can be applied later, after the kernel verifier significantly reduces the need to modify critical components in the Linux kernel;
+Weaknesses
+the added modules increase the TCB, enlarging the attack surfice;
+proofs in lean4 are not included in the paper;
+Kinsn doesn't always lead to performance improvements. Discovering when/where to optimize is potentially hard;
+very modest performance improvement, even in the best case;
+the overall performance gap between ebpf and unsecure baseline reveals that Kinsn' improvements are small compared to the total performance gap;
+Questions for author response
+
+Check Q1-2 in the text box below.
+
+Overall merit
+
+2. 
+Weak reject
+
+Reviewer expertise
+
+3. 
+Mild familiarity: I am familiar with the area but am not up-to-date on the state-of-the art
+
+Comments for authors
+
+The paper is well written and I appreciate the direction of this work on improving the performance of eBPF programs with minimal changes to the verifier. However, there are some points that need to be improved:
+
+1. Increased TCB and Attack Surface
+
+The fundamental appeal of eBPF is its ability to execute safely in the kernel without compromising system stability. The paper claims that BPF-ExT minimizes the Trusted Computing Base (TCB) because the verifier checks a standard eBPF "proof sequence". However, the added KINSN modules inherently increase the TCB by introducing new native emits that the CPU executes directly. Introducing new, architecture-specific kernel modules enlarges the attack surface; a single bug in any of these hand-written native emits will bypass the verifier and compromise kernel safety. To make matters worse, these modules are not small (the paper mentions almost 10k LOC for the implementation of the modules alone).
+
+2. Omission of Lean 4 Proofs
+
+The authors state that they use Lean 4 to prove that each KINSN native emit produces the same eBPF-observable architectural state as its proof sequence. Unfortunately, these proofs are not included in the paper or provided as an artifact. Furthermore, the omission and lack of discussion leave a critical question unanswered: how hard is it to actually create and maintain these proofs for new operations or architectures (Q1)?
+
+3. Unpredictable Optimization Outcomes
+
+The paper acknowledges that KINSN does not always lead to performance improvements and can sometimes degrade it. For instance, the authors note that applying a "coverage-max" policy (applying every matched site) to the Katran workload actually dropped throughput from 1.073x to 0.995x. This reveals that discovering when and where to apply these optimizations is potentially hard. Without a reliable, automated cost model to guide the recognizer, the system relies on manual policy tuning, making it brittle in production environments.
+
+4. Modest Best-Case Performance Improvements
+
+For a systems paper proposing kernel-level modifications and a new compilation pipeline, the real-world performance benefits must justify the complexity. While microbenchmarks show up to a 24% speedup, the gains on production applications are very modest. The KINSN-enabled runs only improved end-to-end datapath throughput by 1.074x for Cilium (x86-64) and 1.073x for Katran (ARM64).
+
+5. Marginal Impact Relative to the Performance Ceiling
+
+The most significant weakness is the scale of KINSN's improvements relative to the fundamental eBPF performance bottleneck. The authors' own "native-in-kernel upper bound" experiment shows that directly compiling the Cilium datapath to native code yields a 2.358x throughput improvement over stock eBPF. By comparison, KINSN's 1.074x throughput gain on Cilium recovers only a tiny fraction (5.4%) of that total available performance gap. This reveals that KINSN's improvements are too small compared to the total performance gap to warrant the added architectural complexity and security risks. Did you investigate what remains to be improved to recover most of the performance from native-in-kernel (Q2)?
+
+Review #1160E
+Paper summary
+
+The paper presents an extension mechanism for eBPF, called BPF-Ext, and a set of extensions, called Kinsn, that use the new mechanism. BPF-Ext is motivated by the difficulty of extending the current, in-kernel eBPF compilation pipeline: basically, how can one define an extension mechanism for the JIT without changing the existing eBPF verifier? The BPF-Ext approach is to define a set of extended instructions ("operations," S4), which are implemented by a modified eBPF pipeline and a set of loadable kernel modules that extend the pipeline. A user-space compiler produces eBPF programs containing extended instructions; in the kernel, each extended instruction is elaborated into (presumably equivalent) ordinary eBPF bytecodes before the program is passed to the unmodified eBPF verifier; and the JIT invokes the extension kernel modules to produce native instructions for extended eBPF instructions.
+
+The paper presents Kinsn, a set of extensions that use BPF-Ext to enhance the eBPF JIT. Kinsn allows the JIT to emit efficient native code for certain constructs that map idiomatically onto native instructions, but which must be encoded as many eBPF bytecode instructions: basically, something akin to a peephole optimizer. Kinsn targets seven hardware idioms "for which the eBPF instruction set has no single-instruction form" (S5). The operations in Kinsn are accompanied by formal proofs: "for each supported Kinsn operation, the eBPF expansion and the corresponding native sequence produce the same eBPF-observable architectural state" (S5).
+
+The paper evaluates BPF-Ext and Kinsn using a set of 27 eBPF microbenchmarks and two eBPF packet-processing applications, Cilium and Katran. Over the microbenchmarks, a primary result is that Kinsn improves performance, reducing execution time by ~18-19% (S7.1). On the two eBPF applications, Kinsn improves throughput by ~1.07x (S7.2). The paper provides insights into the reasons for these improvements (S7.1, S7.3).
+
+Strengths
+
+The paper presents a novel extension mechanism for eBPF, called BPF-Ext. The extension mechanism is minimally invasive to the existing eBPF compilation pipeline. It does not require changes to the current verifier, and it does not require adding an optimizer to the JIT compiler.
+
+The paper presents Kinsn, a set of extensions that use BPF-Ext to enhance the eBPF JIT to emit better code for a small number of important constructs. "Each operation targets an idiom for which the eBPF instruction set has no single-instruction form" (S5): Kinsn is essentially a peephole optimizer that recovers the hardware-efficient instructions for these idioms.
+
+The paper evaluates BPF-Ext and Kinsn using a set of 27 eBPF microbenchmarks and two eBPF packet-processing applications. The evaluation shows that BPF-Ext/Kinsn significantly improve the performance of the benchmarks. The evaluation is well done, and the paper thoroughly discusses the reasons for the observed improvements.
+
+The paper is well written and straightforward to understand.
+
+Weaknesses
+
+BPF-Ext cannot enforce the expectation that extensions are optimizations, i.e., that the "native emit" of an operation is equivalent to the native code that the JIT compiler would otherwise produce (S4.3). This has significant security implications.
+
+The paper does not cite the sources from which the microbenchmarks are extracted (S3.1).
+
+The paper is unclear about what the "conservative Kinsn policy" for ARM64 AWS is (S7.2).
+
+Questions for author response
+
+No specific questions.
+
+Overall merit
+
+4. 
+Accept
+
+Reviewer expertise
+
+3. 
+Mild familiarity: I am familiar with the area but am not up-to-date on the state-of-the art
+
+Comments for authors
+
+I enjoyed reading this paper, and I am pleased to recommend that it be accepted to ATC 2026.
+
+The paper tackles an interesting and significant challenge: how to improve the eBPF compilation pipeline---e.g., implement optimizations in the JIT---without adding significant complexity to the existing components of the pipeline. The paper provides a good summary of why one might want to avoid touching the existing components, because the eBPF instruction set is standardized (S8, Ref25) and implementing optimizations in the JIT would increase the size and complexity of the TCB (S3.5). The paper's answer to the challenge is essentially to "route around" the difficulty: allow bytecode extensions, but replace them before verification. Assuming verification succeeds, send the bytecode with extensions to the JIT, and tell the JIT how to turn the extended instructions into native code. This is the path that one must follow if the verifier and JIT compiler must remain (largely) unchanged.
+
+BPF-Ext is the framework that implements the method. The paper does a good job, in my opinion, at explaining BPF-Ext's design.
+
+Kinsn is the set of extensions that use BPF-Ext to enhance BPF with what amounts to peephole optimizations for a few selected "hardware idioms" (S1) that are not well supported by plain BPF. The paper does a good job at explaining Kinsn and evaluating the benefits that it obtains. I found the discussions of the experimental results in S7.1 and S7.3---e.g., the "different sources of benefit" (S7.1) and the "policy surface" (S7.3)---to be particularly interesting.
+
+The main shortcoming of the BPF-Ext approach is the problem that the paper identifies (S4.3): "The per-operation native emit is the one component whose correctness BPF-Ext cannot check at load time." I.e., BPF-Ext cannot enforce the expectation that the native code emitted by an extension is equivalent to the bytecode that the BPF verifier checked. For Kinsn, this problem is addressed by providing formal proofs. That is fine for a research paper, but I think it is an open question whether this would be fine in practice. BPF-Ext is presented as a mechanism for extensions in general; would a systems administrator actually "check the proofs" before deploying an extension? Maybe in big shops they would; maybe most sysadmins would simply rely on extensions from trusted sources that attest that the proofs have been checked; and maybe for in-house stuff, developers would never produce the proofs at all.
+
+The security implications of BPF-Ext are interesting to consider, and the paper does consider them, satisfactorily so. I believe that Kinsn shows that BPF-Ext-based extensions can be adequately secure. The question of whether or not BPF-Ext would be "usably secure in practice" is interesting, but I think it is not a question that needs to be (or can be) answered in a research paper.
+
+In summary, this paper presents a novel an interesting extension path for eBPF. The work is well described and well evaluated. I am pleased to recommend that this paper be accepted.
+
+Additional comments
+
+S3.1, "Each is a computation kernel from a real eBPF program in networking, tracing, or security.": Unless I overlooked it, the paper does not cite the sources from which the microbenchmarks were derived. The paper should obviously do so, and I think the paper should also describe the microbenchmarks in an appendix as well. I hope that if this paper is accepted, the authors will make the microbenchmarks publicly available (and BPF-Ext and Kinsn as well!).
+
+S7.2, "On ARM64 AWS, the conservative Kinsn policy...": Unless I overlooked it, this is the first mention of the conservative policy. Searching through the paper, I was not able to figure out the differences between "the default full-Kinsn policy" and "the conservative policy." The differences between the full and conservative policies should be better described, or made more obvious (if I overlooked an existing discussion).
+
+@A1Reviewer E·6d
+
+An issue that cuts across the reviews is BPF-Ext's effect on the eBPF trusted computing base.
+
+In the author response to the reviews, please address this concern in particular. It would also be helpful to clarify aspects of Kinsn's Lean 4 proofs, e.g., the semantics on which they are based (cf. Review C) and the effort required to complete them (cf. Review D).
+
+Please respond to other questions/issues raised in the reviews as space permits.
