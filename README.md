@@ -22,8 +22,8 @@ macros give BPF-Ext and Kinsn, and the descriptor struct is `bpf_kinsn`.
   summary of changes from the reviewed version.
 - Final version: Friday 2026-10-16.
 
-The reviews, author response, shepherd comments and revision plan are
-confidential and are kept in a private repository, not here.
+The reviews, author response, shepherd comments, revision plan and the
+submitted PDF are in `review/` (see `review/README.md`).
 
 ## Related
 
