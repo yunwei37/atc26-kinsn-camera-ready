@@ -1,18 +1,4 @@
-%%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
-
-%%%
-% message<\tool recap: dual-form operations under the existing verifier, measured wins, modules>
-% we presented \tool, extending the pipeline with operations the kernel JIT emits directly
-% each operation carries a verifier-checked proof sequence and a native emit the CPU runs
-% only the native emit joins the trusted computing base
-% with \tool we built \lang, seven hardware-idiom operations
-% Lean 4 proofs show each \lang emit computes the same result as its proof sequence
-% \lang speeds up eBPF programs up to 24%/22%, recovering up to 42% of the gap
-% a new operation ships as a kernel module, the settled safety argument stays untouched
-
-%%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
-
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented \tool, a mechanism that extends the eBPF compilation pipeline with new operations the kernel JIT emits directly. Each operation carries a proof sequence that the existing verifier checks on every load and a native emit that the CPU runs. Beyond the generic enforcement core, the native emit is the only per-operation addition to the trusted base. With \tool, we built \lang, a set of seven hardware-idiom operations. Lean 4 proofs show that each \lang native emit has the same eBPF-visible effect as its proof sequence. \lang speeds up eBPF microbenchmarks by up to 24\% on x86-64 and 22\% on ARM64 over the unmodified pipeline, recovering up to 42\% of the gap to native code, and improves production application throughput by up to 12\%. A new operation now ships as a kernel module, and the existing verifier analysis stays untouched.
+We presented \tool, which uses extended instructions to support more efficient native implementations while reusing the existing eBPF verifier. The framework keeps pattern recognition in userspace, uses eBPF implementations for safety analysis of the complete program, and executes semantically equivalent native implementations. New optimizations reuse the framework's kernel support without adding each pattern-recognition and transformation rule to the JIT. We implemented seven categories of local optimizations on x86-64 and ARM64. Relative to the stock Linux eBPF JIT, microbenchmarks achieve geometric mean speedups of 1.24$\times$ and 1.22$\times$, respectively. Throughput also improves for Cilium and Katran.

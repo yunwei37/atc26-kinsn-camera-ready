@@ -1,29 +1,3 @@
-%%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
-
-%%%
-% message<eBPF's simple per-instruction kernel JIT loses up to 2x on hardware idioms>
-% eBPF safely extends OS kernels in domains such as networking, observability, security
-% the safety comes from a verifying pipeline ending in a kernel JIT kept simple
-% the simple JIT translates one instruction at a time
-% C code through the pipeline runs up to twice as slow as natively compiled code
-% the clearest losses come from hardware idioms
-% a CPU executes an idiom directly, yet the idiom reaches the JIT as several instructions
-
-%%%
-% message<dual-form operations under the existing verifier let \lang recover the loss>
-% we present \tool, extending the pipeline with new operations
-% each operation carries two forms, a proof sequence and a native emit
-% the existing verifier checks each proof sequence on every load
-% only the native emit joins the trusted computing base
-% with \tool we build \lang, seven hardware-idiom operations
-% Lean 4 proofs discharge that trust, each emit computes the same result as its sequence
-% a new operation ships as a kernel module
-% on x86-64 and ARM64, \lang speeds up eBPF programs by up to 24% over the unmodified pipeline
-
-%%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
-
 \begin{abstract}
-eBPF safely extends OS kernels in domains such as networking, observability, and security. The safety comes from an in-kernel compilation pipeline: a verifier checks every program for safety, and a kernel just-in-time compiler (JIT) translates the verified bytecode to native code. The kernel keeps the JIT simple to stay trustworthy; it translates one instruction at a time. In our characterization, C code compiled through the pipeline runs up to twice as slow as natively compiled code. The clearest losses come from hardware idioms. A CPU executes an idiom directly, yet the idiom typically reaches the kernel JIT as several instructions.
-%
-We present \tool, a mechanism that extends the eBPF compilation pipeline via kernel modules with new operations, with minimal trusted computing base (TCB). Each operation in a \tool module carries two forms: a \emph{proof sequence} of vanilla eBPF instructions for verifier checks and a \emph{native emit} of machine instructions for JIT compilation. The native emit is the only per-operation addition to the TCB. With \tool, we build \lang, including hardware-idiom operations such as rotate and conditional select. Lean 4 proofs can further discharge that trust, showing that each native emit computes the same result as its proof sequence. On x86-64 and ARM64, \lang speeds up eBPF microbenchmarks by up to 24\% and production applications by up to 12\% over the unmodified pipeline. The same \tool mechanism supports whole-program native replacement, reaching 2.358$\times$ at the cost of a much larger TCB.
+eBPF lets applications execute custom logic in the kernel for tasks such as packet processing and system observability. However, the existing compilation pipeline fails to select efficient implementations available on the target CPU for some computations. Exploiting these opportunities requires existing approaches to trade off native optimization capability against the complexity of trusted code. Bytecode rewriting is constrained by the existing JIT's instruction-selection rules, whereas adding native optimizations requires trusting the corresponding program transformations and code generation. We present \tool, an extensible eBPF compilation framework that enables more efficient native implementations while reusing the existing verifier for safety analysis. The framework identifies optimization opportunities in userspace and selects native implementations provided by the kernel through extended instructions. Each extension describes its behavior using eBPF instructions for safety analysis within the complete program and executes using a semantically equivalent native implementation. We implement seven categories of local optimizations on x86-64 and ARM64. Relative to the stock Linux eBPF JIT, microbenchmarks achieve geometric mean speedups of 1.24$\times$ and 1.22$\times$, respectively. Throughput increases by 7.4\% for Cilium on x86-64 and by 7.3\% for Katran on ARM64.
 \end{abstract}
