@@ -1,8 +1,7 @@
 \documentclass[sigplan,10pt]{acmart}
 
-\settopmatter{printacmref=true,printfolios=true}
-\setcopyright{none}
-\renewcommand\footnotetextcopyrightpermission[1]{}
+% ATC '26 camera-ready: ACM copyright block, no page numbers, headers or footers.
+\settopmatter{printacmref=true,printfolios=false}
 
 \input{helpers/packages}
 
@@ -17,10 +16,12 @@
 %% values in them; it is your responsibility as an author to replace
 %% the commands and values with those provided to you when you
 %% complete the rights form.
+% TODO: replace with the exact commands from the ACM e-Rights confirmation email.
 \setcopyright{acmlicensed}
 \copyrightyear{2026}
 \acmYear{2026}
 \acmDOI{XXXXXXX.XXXXXXX}
+\acmISBN{978-X-XXXX-XXXX-X/2026/11}
 %% These commands are for a PROCEEDINGS abstract or paper.
 \acmConference[ATC '26]{2026 ACM SIGOPS Annual Technical Conference}{November 16--18,
   2026}{Shatin, Hong Kong}
@@ -144,7 +145,6 @@
 %% information and builds the first part of the formatted document.
 \maketitle
 \fancyhf{}
-\fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0pt}
 
 \input{sections/1-introduction}
