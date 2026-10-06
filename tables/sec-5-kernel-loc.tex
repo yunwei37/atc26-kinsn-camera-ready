@@ -1,21 +1,19 @@
 \begin{table}[t]
 \centering
 \small
-\caption{Code changes for common kernel integration relative to the upstream baseline. Blank and comment-only lines are excluded, and modified lines are not counted as additions or deletions. Counts exclude the userspace pattern recognizer and operation modules.}
+\caption{The kernel core is a 929-line addition, measured as lines added on the \tool kernel branch over mainline Linux. The total excludes 11 lines of disassembler support and tools-side header sync.}
 \label{tab:kernel-loc}
-\setlength{\tabcolsep}{2.5pt}
-\renewcommand{\arraystretch}{1.1}
-\begin{tabular*}{\columnwidth}{@{\extracolsep{\fill}}lrrr@{}}
+\begin{tabular}{@{}lc@{}}
 \toprule
-\textbf{Kernel code} & \textbf{Added} & \textbf{Modified} & \textbf{Deleted} \\
+Component & Lines of code \\
 \midrule
-Verifier & 389 & 26 & 41 \\
-BTF & 107 & 11 & 5 \\
-x86-64 JIT & 80 & 3 & 0 \\
-ARM64 JIT & 96 & 15 & 0 \\
-Headers & 65 & 1 & 0 \\
+Verifier (lowering, restore, validation) & 487 \\
+BTF and registration & 139 \\
+JIT dispatch (ARM64) & 121 \\
+JIT dispatch (x86-64) & 97 \\
+Headers & 85 \\
 \midrule
-\textbf{Total} & \textbf{737} & \textbf{56} & \textbf{46} \\
+Total kernel core & 929 \\
 \bottomrule
-\end{tabular*}
+\end{tabular}
 \end{table}
