@@ -83,11 +83,11 @@ Its safety comes from a compilation pipeline that verifies every program before 
 % 其安全性来自在执行前验证每个程序的编译管线：用户空间编译器将程序降低为 eBPF 字节码，内核验证器检查字节码的内存安全和终止性等安全属性，内核即时编译器（内核 JIT）再将验证后的字节码翻译为本地代码。
 The eBPF design favors safety over speed: the eBPF instruction set is designed to be verifiable and portable, and because the verifier checks only the bytecode, the kernel must trust the JIT and keeps it deliberately simple, translating one opcode at a time.
 % eBPF 的设计偏重安全而非速度：eBPF 指令集是为可验证和可移植而设计的；而由于验证器只检查字节码，内核必须信任 JIT，因此刻意保持 JIT 简单，一次只翻译一个操作码。
-Yet many eBPF programs run on hot kernel paths, such as once for every packet, where performance is critical.
-% 然而许多 eBPF 程序运行在内核热路径上，例如每个数据包运行一次，此时性能至关重要。
 
-This design comes at a cost.
+However, this design comes at a cost.
 % 这种设计是有代价的。
+Many eBPF programs run on hot kernel paths, such as once for every packet, where performance is critical.
+% 许多 eBPF 程序运行在内核热路径上，例如每个数据包运行一次，此时性能至关重要。
 The same C code runs up to twice as slow through the eBPF pipeline as when compiled directly to native code (\S\ref{sec:characterization}).
 % 同样的 C 代码经过 eBPF 管线运行，比直接编译为本地代码慢达两倍。
 Because an optimizing compiler~\cite{zheng2025extending} fed the same verified bytecode recovers most of this gap, the loss lies in the kernel JIT's per-opcode code generation rather than in the bytecode itself.
