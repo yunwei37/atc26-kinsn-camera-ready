@@ -23,24 +23,24 @@
 %%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
 
 \begin{abstract}
-eBPF is widely used in production to extend OS kernels safely by verifying bytecode before it translates to native code. The performance is critical for many applications.
+eBPF is widely used in production to extend OS kernels safely by verifying bytecode before execution. The performance is critical for many applications.
 % 其安全性来自编译管线：验证器检查每个程序的字节码，内核即时编译器（JIT）将验证后的字节码翻译为本地代码。
-Yet, it's design favors safety over speed: the instruction set is designed to be verifiable, and the kernel keeps the JIT simple to stay trustworthy, translating one opcode at a time.
+However, its design favors safety over speed: the instruction set is designed to be verifiable, and the kernel keeps the JIT simple to stay trustworthy, translating one opcode at a time.
 % 这条管线偏重安全而非速度：指令集为可验证而设计，内核保持 JIT 简单以维持可信，一次只翻译一个操作码。
 As a result, eBPF runs up to twice as slow as natively compiled code in our characterization, and the clearest losses come from hardware idioms, operations that CPUs usually execute as a single instruction but the eBPF instruction set lacks.
 % 因此，在我们的特征分析中，eBPF 运行速度比原生编译慢达两倍，最明显的损失来自硬件习语，即 CPU 通常以单条指令执行、但 eBPF 指令集缺少的操作。
-Optimizing the bytecode only cannot emit these instructions, adding them to the instruction set requires changing the verifier and every JIT, and optimizing during the translation to native code enlarges the trusted computing base (TCB).
+Optimizing the bytecode alone cannot emit these instructions, adding them to the instruction set requires changing the verifier, JIT and compiler, and optimizing during the JITenlarges the trusted computing base (TCB).
 % 优化字节码无法发射这些指令，把它们加入指令集需要修改验证器和每个 JIT，而在翻译到本地代码的过程中优化则会扩大可信计算基（TCB）。
 
-We present \tool, an extension interface that lets userspace compilers and kernel modules introduce new operations without further changes to the kernel core or the verifier.
+We present \tool, an extension interface that allows kernel modules introduce new operations without further changes to the kernel core or the verifier.
 % 我们提出 \tool，一种扩展接口，让用户空间编译器和内核模块能够引入新操作，而无需再修改内核核心或验证器。
 Our key insight is that a new operation can be verified by expressing it in vanilla eBPF, while the CPU runs a native implementation of the same operation.
 % 我们的核心洞见是：新操作可以通过用原生 eBPF 表达它来验证，而 CPU 运行的是同一操作的本地实现。
-Each operation therefore has two forms, a \emph{proof sequence} of vanilla eBPF that the existing verifier checks and a \emph{native emit} of machine instructions that the CPU runs, so the native emit is the only per-operation addition to the TCB.
-% 因此每个操作有两种形式：现有验证器检查的原生 eBPF \emph{证明序列}，和 CPU 运行的机器指令\emph{本地发射}，于是本地发射是每个操作对 TCB 的唯一增加。
-Using \tool, we build \lang, seven hardware-idiom operations such as rotate and conditional select, and prove in Lean 4 that each native emit computes the same result as its proof sequence.
+Each operation therefore has two forms, since the verifier checks only the eBPF form, the native implementation is the only per-operation addition to the TCB.
+% 我们把 eBPF 形式称为\emph{证明序列}，把本地实现称为\emph{本地发射}；由于验证器只检查证明序列，本地发射是每个操作对 TCB 的唯一增加。
+Using \tool, we build \lang, seven hardware-idiom operations such as rotate and conditional select, and prove in Lean 4 that each native implementation computes the same result as its eBPF form.
 % 借助 \tool，我们构建了 \lang，包括旋转和条件选择等七个硬件习语操作，并在 Lean 4 中证明每个本地发射与其证明序列计算相同的结果。
-On x86-64 and ARM64, \lang speeds up eBPF microbenchmarks by 24\% and 22\% in geometric mean and production applications by up to 12\%.
+On x86-64 and ARM64, \lang speeds up microbenchmarks by 24\% and 22\%  and production applications by up to 12\%.
 % 在 x86-64 和 ARM64 上，\lang 使 eBPF 微基准测试的几何平均提速分别为 24\% 和 22\%，生产应用提速达 12\%。
 The same interface also supports whole-program native replacement, reaching 2.358$\times$ on Cilium at the cost of a larger TCB.
 % 同样的接口还支持整个程序的本地替换，以更大的 TCB 为代价在 Cilium 上达到 2.358 倍加速。
