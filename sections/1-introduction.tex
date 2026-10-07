@@ -93,14 +93,14 @@ The same C code runs up to twice as slow through the eBPF pipeline as when compi
 Because an optimizing compiler~\cite{zheng2025extending} fed the same verified bytecode recovers most of this gap, the loss lies in the kernel JIT's per-opcode code generation rather than in the bytecode itself.
 % 由于对相同的验证字节码应用优化编译器可恢复大部分差距，损失在于内核 JIT 的逐操作码代码生成，而不在字节码本身。
 
-The clearest losses come from \emph{hardware idioms}: operations such as rotate, conditional select, and bit extract that a CPU usually executes as a single instruction but for which the eBPF instruction set has no single-instruction form.
+The clearest losses come from \emph{hardware idioms}, operations such as rotate, conditional select, and bit extract that a CPU usually executes as a single instruction but for which the eBPF instruction set has no single-instruction form.
 % 最明显的损失来自\emph{硬件习语}：旋转、条件选择和位提取等操作，CPU 通常以单条指令执行它们，而 eBPF 指令集没有对应的单指令形式。
 A 64-bit rotate with a variable shift, for example, is a single \texttt{ROL} instruction on x86-64, but it reaches the kernel JIT as eight bytecode instructions and leaves as 15 machine instructions.
 % 例如，64 位可变位移旋转在 x86-64 上是单条 ROL 指令，却以 8 条字节码指令到达内核 JIT，并以 15 条机器指令离开。
 
-Three intuitive approaches fall short.
+You might think of three intuitive approaches, but they all fall short.
 % 三种直觉上的方案都有不足。
-Optimizing on the bytecode still cannot emit the missing native instructions: dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs within the instruction set.
+Optimizing on the bytecode still cannot emit the missing native instructions; dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs within the instruction set.
 % 在字节码上优化无法发射缺失的指令：Merlin、K2 和 EPSO 等专用 eBPF 优化器只在指令集内重写程序。
 Adding the missing instructions to the instruction set would require changing the compiler, the verifier, and every JIT; because the verifier and the JIT embody years of analysis and formal verification~\cite{nelson2020specification,vishwanathan2023verifying}, such changes are laborious and risk introducing safety bugs, so the instruction set has changed little since its standardization~\cite{rfc9669}.
 % 在指令集中加入缺失的指令需要修改编译器、验证器和每一个 JIT；由于验证器和 JIT 凝聚了多年的分析和形式化验证，这样的修改既繁琐又容易引入安全漏洞，因此指令集自标准化以来几乎没有变化。
@@ -118,7 +118,7 @@ We present \tool, an extension interface that lets userspace compilers and kerne
 % 我们提出 \tool，一种扩展接口，让用户空间编译器和内核模块能够引入新操作，而无需再修改内核核心或验证器。
 Our key insight is that the verifier does not need to see the code that runs: any vanilla eBPF sequence with the same semantics suffices for its analysis.
 % 我们的核心洞见是：验证器不需要看到实际运行的代码，任何语义相同的原生 eBPF 序列都足以供其分析。
-\tool therefore gives each operation two forms: a \emph{proof sequence} of vanilla (unextended) eBPF that the existing verifier checks, and a \emph{native emit} that the CPU runs.
+\tool therefore gives each operation two forms, a \emph{proof sequence} of vanilla (unextended) eBPF that the existing verifier checks, and a \emph{native emit} that the CPU runs.
 % 因此 \tool 给每个操作两种形式：现有验证器检查的原生（未扩展）eBPF \emph{证明序列}，和 CPU 运行的\emph{本地发射}。
 Because every proof sequence is vanilla eBPF, verification remains architecture-independent.
 % 由于每个证明序列都是原生 eBPF，验证保持与架构无关。
@@ -131,7 +131,7 @@ Using \tool, we build \lang, a first set of seven hardware-idiom operations, inc
 % 借助 \tool，我们构建了 \lang，第一组七个硬件习语操作，包括旋转、条件选择和位提取。
 Since the verifier never sees the native emit, the native emit is the only per-operation addition to the TCB.
 % 由于验证器从未看到本地发射，本地发射是每个操作对 TCB 的唯一增加。
-We therefore prove in Lean 4 that, for each operation, the native emit computes the same result as its proof sequence, which extends the verifier's guarantee to the native code.
+We close this gap by proving in Lean 4 that, for each operation, the native emit computes the same result as its proof sequence, which extends the verifier's guarantee to the native code.
 % 因此我们在 Lean 4 中证明，对于每个操作，本地发射与其证明序列计算相同的结果，从而将验证器的保证延伸到本地代码。
 
 We implement \tool in the Linux kernel and userspace tooling as a small, one-time change to the kernel core, a compile-time recognizer, and kernel modules that supply the operations.

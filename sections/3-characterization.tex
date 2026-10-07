@@ -108,7 +108,7 @@
 \label{sec:characterization}
 % eBPF 与原生性能差距的特征分析
 
-The same source program runs 1.57$\times$ slower on x86-64, and 1.98$\times$ slower on ARM64, through the eBPF compilation pipeline than under direct native compilation (Table~\ref{tab:char-micro-summary}).
+The same source program runs 1.57$\times$ slower on x86-64, and 1.98$\times$ slower on ARM64, through the eBPF compilation pipeline than under direct native compilation (Figure~\ref{fig:char-pure-percase}).
 % 同样的源程序通过 eBPF 编译管线比直接原生编译慢 1.57 倍（x86-64）和 1.98 倍（ARM64）。
 We characterize the gap on pure-bytecode microbenchmarks, computation kernels that use no helper calls or map accesses, through three questions:
 % 我们通过三个问题在纯字节码微基准测试上特征化这一差距，这些是不使用辅助调用或映射访问的计算内核：
