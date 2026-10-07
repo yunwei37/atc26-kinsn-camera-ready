@@ -107,7 +107,7 @@ Each operation ships as one or more loadable kernel modules (\S\ref{subsec:descr
 
 The kernel core adds 929 lines to the Linux kernel, broken down by component in Table~\ref{tab:kernel-loc}.
 % 内核核心向 Linux 内核添加了 929 行，表按组件分解了总数。
-Each extended instruction is a pair of instructions, a sidecar followed by a call, shown in Table~\ref{tab:encoding}.
+Each extended instruction is a pair of instructions, a sidecar followed by a call.
 % 每条扩展指令是一对指令：一个伴随，后面跟一个调用，如表所示。
 Both reuse existing eBPF opcodes, and a reserved \texttt{src\_reg} value marks the pair for \tool.
 % 两者都重用现有的 eBPF 操作码，保留的 src\_reg 值标记该对用于 \tool。
@@ -116,7 +116,7 @@ The call identifies the operation, and the sidecar carries a packed 52-bit paylo
 
 \input{tables/sec-5-kernel-loc}
 
-\input{tables/sec-5-encoding}
+% \input{tables/sec-5-encoding}
 
 The verifier gains a lowering stage and a restore stage around its existing analysis.
 % 验证器在其现有分析周围获得降低阶段和恢复阶段。

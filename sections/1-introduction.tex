@@ -77,7 +77,7 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Extended Berkeley Packet Filter (eBPF) safely extends OS kernels and is widely used in production, in domains including networking~\cite{cilium,katran}, observability~\cite{bpftrace,bcc}, security~\cite{krsi_lwn,tracee}, and scheduling~\cite{sched_ext_lwn}.
+Extended Berkeley Packet Filter (eBPF) safely extends OS kernels and is widely used in production for networking~\cite{cilium,katran}, observability~\cite{bpftrace,bcc}, security~\cite{krsi_lwn,tracee}, and scheduling~\cite{sched_ext_lwn}.
 % 扩展伯克利数据包过滤器（eBPF）安全地扩展操作系统内核，并在生产中被广泛使用，涵盖网络、可观测性、安全和调度等领域。
 Its safety comes from a compilation pipeline that verifies every program before execution. In eBPF, a userspace compiler lowers each program to eBPF bytecode, the in-kernel verifier checks the bytecode for safety properties such as memory safety and termination, and the kernel's just-in-time compiler (the kernel JIT) translates the verified bytecode to native code.
 % 其安全性来自在执行前验证每个程序的编译管线：用户空间编译器将程序降低为 eBPF 字节码，内核验证器检查字节码的内存安全和终止性等安全属性，内核即时编译器（内核 JIT）再将验证后的字节码翻译为本地代码。
@@ -104,15 +104,15 @@ Optimizing on the bytecode still cannot emit the missing native instructions: de
 % 在字节码上优化无法发射缺失的指令：Merlin、K2 和 EPSO 等专用 eBPF 优化器只在指令集内重写程序。
 Adding the missing instructions to the instruction set would require changing the compiler, the verifier, and every JIT; because the verifier and the JIT embody years of analysis and formal verification~\cite{nelson2020specification,vishwanathan2023verifying}, such changes are laborious and risk introducing safety bugs, so the instruction set has changed little since its standardization~\cite{rfc9669}.
 % 在指令集中加入缺失的指令需要修改编译器、验证器和每一个 JIT；由于验证器和 JIT 凝聚了多年的分析和形式化验证，这样的修改既繁琐又容易引入安全漏洞，因此指令集自标准化以来几乎没有变化。
-Optimizing during the translation from bytecode to native code, whether by replacing the simple JIT with an optimizing compiler or by optimizing after verification~\cite{shahinfar2026fun}, would enlarge the trusted computing base (TCB) with a large compiler whose translation the kernel must trust, and in the kernel it would also grow the code maintained for each architecture.
+Optimizing during the translation from bytecode to native code, whether by replacing the simple JIT with an optimizing compiler or after verification~\cite{shahinfar2026fun}, would enlarge the trusted computing base (TCB) with a large compiler whose translation the kernel must trust, and, in the kernel, would also grow the code maintained for each architecture.
 % 在从字节码翻译到本地代码的过程中进行优化，无论是用优化编译器替换简单的 JIT，还是在验证之后再优化，都会用一个内核必须信任其翻译的大型编译器扩大可信计算基（TCB），而放在内核中还会增加每个架构需要维护的代码。
 
-To solve the problem, we must find a way for the simple kernel JIT to emit native instructions that the instruction set lacks while keeping the TCB small.
-% 要解决这个问题，我们必须找到一种方法，让简单的内核 JIT 能发射指令集缺少的本地指令，同时保持 TCB 小。
-Such instructions are not few since every architecture keeps adding instruction-set extensions, and which of them pay off depends on the CPU and the workload, so new operations must be easy to add.
-% 这样的指令并不少：每个架构都在不断加入指令集扩展，而哪些扩展有收益取决于 CPU 和工作负载，因此必须能方便地添加新操作。
-Specifically, adding them must meet three requirements: the existing verifier must still prove every loaded program safe, even though new operations come from untrusted code outside the verifier and the JIT; the kernel change must be small and made once rather than for every new operation; and although native code is specific to each architecture, the verifier's reasoning must remain architecture-independent.
-% 添加它们必须满足三个要求：即使新操作来自验证器和 JIT 之外的不可信代码，现有验证器仍必须证明每个加载的程序安全；内核改动必须小，并且只做一次，而不是每增加一个操作就改一次；尽管本地代码特定于每个架构，验证器的推理必须保持与架构无关。
+To recover these losses, we must find a way for the simple kernel JIT to emit native instructions that the instruction set lacks while keeping the TCB small.
+% 要追回这些损失，我们必须找到一种方法，让简单的内核 JIT 能发射指令集缺少的本地指令，同时保持 TCB 小。
+Such instructions are many since every architecture keeps adding instruction-set extensions, and which of them pay off depends on the CPU and the workload, so new operations that emit them must be easy to add.
+% 这样的指令很多：每个架构都在不断加入指令集扩展，而哪些扩展有收益取决于 CPU 和工作负载，因此发射它们的新操作必须易于添加。
+Specifically, adding them safely must meet three requirements: the existing verifier must still prove every loaded program safe, even though new operations come from untrusted code outside the verifier and the JIT; the kernel change must be small and made once rather than for every new operation; and although native code is specific to each architecture, the verifier's reasoning must remain architecture-independent.
+% 安全地添加它们必须满足三个要求：即使新操作来自验证器和 JIT 之外的不可信代码，现有验证器仍必须证明每个加载的程序安全；内核改动必须小，并且只做一次，而不是每增加一个操作就改一次；尽管本地代码特定于每个架构，验证器的推理必须保持与架构无关。
 
 We present \tool, an extension interface that lets userspace compilers and kernel modules introduce new operations without further changes to the kernel core or the verifier.
 % 我们提出 \tool，一种扩展接口，让用户空间编译器和内核模块能够引入新操作，而无需再修改内核核心或验证器。
@@ -136,7 +136,7 @@ We therefore prove in Lean 4 that, for each operation, the native emit computes 
 
 We implement \tool in the Linux kernel and userspace tooling as a small, one-time change to the kernel core, a compile-time recognizer, and kernel modules that supply the operations.
 % 我们在 Linux 内核和用户空间工具中实现 \tool，包括对内核核心的一次性小改动、编译时识别器和提供操作的内核模块。
-On microbenchmarks, \lang speeds up eBPF by 24\% on x86-64 and 22\% on ARM64 in geometric mean over the unmodified pipeline, recovering 42\% of the x86-64 gap to native code, and it shrinks native code by 12--23\%.
+On microbenchmarks, \lang speeds up eBPF programs by 24\% on x86-64 and 22\% on ARM64 in geometric mean over the unmodified pipeline, recovering 42\% of the x86-64 gap to native code, and it shrinks native code by 12--23\%.
 % 在微基准测试上，\lang 相对未修改的管线使 eBPF 在 x86-64 上几何平均提速 24\%，在 ARM64 上提速 22\%，恢复了 x86-64 上与本地代码差距的 42\%，并使本地代码缩小 12--23\%。
 On production applications, it improves throughput by up to 12\%; the gains are smaller because a real datapath spends most of its time in helper calls, map accesses, and tail calls, which instruction selection cannot reach (\S\ref{sec:eval}).
 % 在生产应用上，它使吞吐量提高达 12\%；收益较小是因为真实数据通路的大部分时间花在 helper 调用、map 访问和尾调用上，这些是指令选择无法触及的。

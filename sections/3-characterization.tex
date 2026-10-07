@@ -151,7 +151,7 @@ The gap therefore characterizes the bytecode-to-native code-generation quality; 
 
 \noindent\textbf{Execution paths.}
 % \noindent\textbf{执行路径。}
-We compile each benchmark through four execution paths, the kernel eBPF JIT baseline plus the three paths in Table~\ref{tab:char-micro-summary}.
+We compile each benchmark through four execution paths, the kernel eBPF JIT baseline plus the three paths in Figure~\ref{fig:char-pure-percase}.
 % 我们通过四条执行路径编译每个基准测试，内核 eBPF JIT 基线加上表中的三条路径。
 The paths vary the final backend and where the code runs.
 % 这些路径在最终后端和代码运行位置上有所不同。
@@ -177,9 +177,11 @@ A path's speedup on a benchmark is the kernel eBPF JIT's median steady-state exe
 Each reported speedup is the geometric mean over the benchmarks.
 % 每个报告的加速比是所有基准测试的几何平均值。
 Load, link, and compile time stay outside the speedup.
+Each of the three paths beats the kernel eBPF JIT by more than 2\% on 24 or 25 of the 27 benchmarks on x86-64 and on all 27 on ARM64.
+% 三条路径各自在 x86-64 上的 27 个基准中有 24 或 25 个、在 ARM64 上全部 27 个比内核 eBPF JIT 快 2\% 以上。
 % 加载、链接和编译时间不计入加速比。
 
-\input{tables/sec-3-micro-summary}
+% \input{tables/sec-3-micro-summary}
 
 \subsection{C-RQ1: How Much Does In-Kernel Execution Slow Native Code?}
 \label{subsec:gap}
@@ -213,7 +215,7 @@ Code from an optimizing compiler on the same bytecode runs almost as fast as nat
 % 对相同字节码应用优化编译器生成的代码运行速度几乎与原生代码相同。
 Userspace LLVM-BPF compiles the same verified bytecode that the kernel runs, but with an optimizing backend in place of the per-opcode kernel JIT.
 % 用户空间 LLVM-BPF 编译内核运行的相同验证字节码，但用优化后端替代逐操作码内核 JIT。
-As Table~\ref{tab:char-micro-summary} shows, userspace LLVM-BPF reaches 1.53$\times$ on x86-64 and 1.92$\times$ on ARM64.
+As Figure~\ref{fig:char-pure-percase} shows, userspace LLVM-BPF reaches 1.53$\times$ on x86-64 and 1.92$\times$ on ARM64.
 % 如表所示，用户空间 LLVM-BPF 在 x86-64 上达到 1.53 倍，在 ARM64 上达到 1.92 倍。
 Against userspace native at 1.57$\times$ and 1.98$\times$, the optimizing backend recovers 93\% and 94\% of the gap.
 % 对比用户空间原生的 1.57 倍和 1.98 倍，优化后端恢复了 93\% 和 94\% 的差距。
