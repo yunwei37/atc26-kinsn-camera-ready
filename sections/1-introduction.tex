@@ -98,26 +98,26 @@ The clearest losses come from \emph{hardware idioms}: operations such as rotate,
 A 64-bit rotate with a variable shift, for example, is a single \texttt{ROL} instruction on x86-64, but it reaches the kernel JIT as eight bytecode instructions and leaves as 15 machine instructions.
 % 例如，64 位可变位移旋转在 x86-64 上是单条 ROL 指令，却以 8 条字节码指令到达内核 JIT，并以 15 条机器指令离开。
 
-Two intuitive approaches fall short.
-% 两种直觉上的方案都有不足。
-Optimizing the bytecode cannot emit the missing instructions: dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs within the instruction set, thus still unable to generate the native instructions that the CPU can execute efficiently.
-% 优化字节码无法发射缺失的指令：Merlin、K2 和 EPSO 等专用 eBPF 优化器只在指令集内重写程序，因此仍然无法生成 CPU 可以高效执行的本地指令。
-Optimizing to native code, whether by replacing the simple JIT with an optimizing compiler or by optimizing after verification~\cite{shahinfar2026fun}, would enlarge the trusted computing base (TCB) with a large compiler whose translation the kernel must trust, and in the kernel it would also grow the code maintained for each architecture.
-% 优化到本地代码，无论是用优化编译器替换简单的 JIT，还是在验证之后再优化，都会用一个内核必须信任其翻译的大型编译器扩大可信计算基（TCB），而放在内核中还会增加每个架构需要维护的代码。
+Three intuitive approaches fall short.
+% 三种直觉上的方案都有不足。
+Optimizing on the bytecode cannot emit the missing instructions: dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs within the instruction set, thus still unable to generate the native instructions that the CPU can execute efficiently.
+% 在字节码上优化无法发射缺失的指令：Merlin、K2 和 EPSO 等专用 eBPF 优化器只在指令集内重写程序，因此仍然无法生成 CPU 可以高效执行的本地指令。
+Adding the missing instructions to the instruction set would require changing the compiler, the verifier, and every JIT; because the verifier and the JIT embody years of analysis and formal verification~\cite{nelson2020specification,vishwanathan2023verifying}, such changes are laborious and risk introducing safety bugs, so the instruction set has changed little since its standardization~\cite{rfc9669}.
+% 在指令集中加入缺失的指令需要修改编译器、验证器和每一个 JIT；由于验证器和 JIT 凝聚了多年的分析和形式化验证，这样的修改既繁琐又容易引入安全漏洞，因此指令集自标准化以来几乎没有变化。
+Optimizing during the translation from bytecode to native code, whether by replacing the simple JIT with an optimizing compiler or by optimizing after verification~\cite{shahinfar2026fun}, would enlarge the trusted computing base (TCB) with a large compiler whose translation the kernel must trust, and in the kernel it would also grow the code maintained for each architecture.
+% 在从字节码翻译到本地代码的过程中进行优化，无论是用优化编译器替换简单的 JIT，还是在验证之后再优化，都会用一个内核必须信任其翻译的大型编译器扩大可信计算基（TCB），而放在内核中还会增加每个架构需要维护的代码。
 
-We instead keep the kernel JIT simple and extend the eBPF instruction set with a handful of new operations, \emph{extended instructions} that the JIT emits as native instructions.
-% 我们转而保持内核 JIT 简单，用少量新操作扩展 eBPF 指令集，即 JIT 以本地指令发射的\emph{扩展指令}。
-A handful suffices because the idioms that the JIT compiles poorly form a small, bounded set.
-% 少量即可，因为 JIT 编译效果差的习语构成一个小的有界集合。
-More generally, emitting the idioms is an instance of extending a verified compilation pipeline with new operations while keeping the TCB small.
-% 更一般地说，发射这些习语是在保持 TCB 小的同时用新操作扩展一个经过验证的编译管线的一个实例。
+To solve the problem, we must find a way for the simple kernel JIT to emit native instructions that the instruction set lacks, without adding instructions to the instruction set, changing the verifier for each new operation, or trusting a large compiler.
+% 要解决这个问题，我们必须找到一种方法，让简单的内核 JIT 能发射指令集缺少的本地指令，同时不向指令集添加指令、不为每个新操作修改验证器，也不信任一个大型编译器。
+Such instructions are not few since every architecture keeps adding instruction-set extensions, and which of them pay off depends on the CPU and the workload, so new operations must be easy to add.
+% 这样的指令并不少：每个架构都在不断加入指令集扩展，而哪些扩展有收益取决于 CPU 和工作负载，因此必须能方便地添加新操作。
 
-Such an extension must meet three requirements.
-% 这样的扩展必须满足三个要求。
-First, it must preserve eBPF's safety guarantee, with the existing verifier still proving every loaded program safe, even though new operations come from untrusted code outside the verifier and the JIT.
-% 第一，它必须保持 eBPF 的安全保证，由现有验证器继续证明每个加载的程序安全，即使新操作来自验证器和 JIT 之外的不可信代码。
-Second, because the verifier and the JIT embody years of analysis and formal verification~\cite{nelson2020specification,vishwanathan2023verifying}, the kernel change must be small and made once rather than for every new operation.
-% 第二，由于验证器和 JIT 凝聚了多年的分析和形式化验证，内核改动必须小，并且只做一次，而不是每增加一个操作就改一次。
+Extending a verified compilation pipeline with new operations while keeping the TCB small must meet three requirements.
+% 在保持 TCB 小的同时用新操作扩展一个经过验证的编译管线，必须满足三个要求。
+First, the extension must preserve eBPF's safety guarantee, with the existing verifier still proving every loaded program safe, even though new operations come from untrusted code outside the verifier and the JIT.
+% 第一，扩展必须保持 eBPF 的安全保证，由现有验证器继续证明每个加载的程序安全，即使新操作来自验证器和 JIT 之外的不可信代码。
+Second, the kernel change must be small and made once rather than for every new operation.
+% 第二，内核改动必须小，并且只做一次，而不是每增加一个操作就改一次。
 Third, although native code is specific to each architecture, the verifier's reasoning must remain architecture-independent.
 % 第三，尽管本地代码特定于每个架构，验证器的推理必须保持与架构无关。
 
