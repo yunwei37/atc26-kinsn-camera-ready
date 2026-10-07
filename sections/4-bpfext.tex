@@ -249,8 +249,8 @@ Because extended instructions reuse existing eBPF opcodes, \tool adds no new opc
 % 扩展指令重用现有的 eBPF 操作码，因此 \tool 不添加新操作码。
 A new operation needs only a pattern in the recognizer and one or more kernel modules that supply its proof sequence and native emits.
 % 新操作只需要识别器中的模式，以及一个或多个提供其证明序列和本地发射的内核模块。
-\tool's one-time change to the verifier and the JIT, the \emph{kernel core}, handles every extended instruction through one generic lowering and dispatch path, so it stays the same for every operation (\S\ref{sec:implementation}).
-% \tool 对验证器和 JIT 的一次性修改，即\emph{内核核心}，通过一条通用的降低和分派路径处理所有扩展指令，因此对每个操作保持不变。
+\tool's one-time kernel patch to the verifier and the JIT handles every extended instruction through one generic lowering and dispatch path, so it stays the same for every operation (\S\ref{sec:implementation}).
+% \tool 对验证器和 JIT 的一次性内核补丁通过一条通用的降低和分派路径处理所有扩展指令，因此对每个操作保持不变。
 
 \subsection{The Compilation Pipeline}
 \label{subsec:pipeline}
@@ -305,8 +305,8 @@ For the collapse to preserve the verdict, control must enter a region only at it
 At load time, the kernel validates that each region has a single entry and a single exit and contains no nested extended instructions, calls, or exits; regions must also contain no backward jumps.
 % 内核在加载时验证每个区域单入口单出口，且不含嵌套扩展指令、调用或退出；区域还必须不含向后跳转。
 
-What remains trusted is the existing eBPF verifier and JIT plus the kernel core, which validates proof regions, lowers extended instructions before verification, restores them after verification, and dispatches their native emits (\S\ref{sec:implementation}).
-% 因此可信路径包括现有的 eBPF 验证器和 JIT，加上内核核心，它验证证明区域、在验证前降低扩展指令、在验证后恢复它们、并分派它们的本地发射。
+What remains trusted is the existing eBPF verifier and JIT, together with \tool's one-time kernel patch to them, which validates proof regions, lowers extended instructions before verification, restores them after verification, and dispatches their native emits (\S\ref{sec:implementation}).
+% 因此可信路径包括现有的 eBPF 验证器和 JIT，以及 \tool 对它们的一次性内核补丁，它验证证明区域、在验证前降低扩展指令、在验证后恢复它们、并分派它们的本地发射。
 Of these components, only the per-operation native emit escapes any check at load time.
 % 每操作本地发射是 \tool 无法在加载时检查其正确性的唯一组件。
 Each operation must then supply evidence that its native emit computes the same result as its proof sequence on every register and memory location the program can read afterwards.

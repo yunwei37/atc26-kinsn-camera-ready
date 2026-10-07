@@ -94,19 +94,19 @@
 
 We implement \tool in three parts.
 % 我们分三部分实现 \tool。
-The kernel core is a one-time change to the verifier and the JIT (\S\ref{subsec:kernel}).
-% 内核核心是对验证器和 JIT 的一次性更改。
+The kernel patch is a one-time change to the verifier and the JIT (\S\ref{subsec:kernel}).
+% 内核补丁是对验证器和 JIT 的一次性更改。
 A compile-time recognizer rewrites idioms in userspace before load (\S\ref{subsec:llvm}).
 % 编译时识别器在加载前在用户空间重写习语。
 Each operation ships as one or more loadable kernel modules (\S\ref{subsec:descriptors}).
 % 每个操作作为一个或多个可加载内核模块发布。
 
-\subsection{Kernel Core}
+\subsection{Kernel Patch}
 \label{subsec:kernel}
-% 内核核心
+% 内核补丁
 
-The kernel core adds 929 lines to the Linux kernel, broken down by component in Table~\ref{tab:kernel-loc}.
-% 内核核心向 Linux 内核添加了 929 行，表按组件分解了总数。
+The kernel patch adds 929 lines to the Linux kernel, broken down by component in Table~\ref{tab:kernel-loc}.
+% 内核补丁向 Linux 内核添加了 929 行，表按组件分解了总数。
 Each extended instruction is a pair of instructions, a sidecar followed by a call.
 % 每条扩展指令是一对指令：一个伴随，后面跟一个调用，如表所示。
 Both reuse existing eBPF opcodes, and a reserved \texttt{src\_reg} value marks the pair for \tool.
@@ -146,8 +146,8 @@ A program built without the recognizer, or one whose idioms the recognizer does 
 \label{subsec:descriptors}
 % 操作模块
 
-Each operation is packaged as one or more kernel modules, separate from the kernel core.
-% 每个操作打包为一个或多个内核模块，与内核核心分开。
+Each operation is packaged as one or more kernel modules, separate from the kernel patch.
+% 每个操作打包为一个或多个内核模块，与内核补丁分开。
 A module supplies an operation's proof-sequence routine and its native emits, and registers both through two existing kernel facilities, BTF, the kernel's type metadata for eBPF objects, and kfuncs, kernel functions that eBPF programs may call.
 % 模块提供操作的证明序列例程及其本地发射，并通过两个现有内核设施注册两者：BTF（内核对 eBPF 对象的类型元数据）和 kfunc（eBPF 程序可以调用的内核函数）。
 \tool leaves an operation's size open: a proof sequence may span a few instructions or an entire region within the rules of \S\ref{subsec:safety}.

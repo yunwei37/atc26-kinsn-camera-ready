@@ -114,8 +114,8 @@ Such instructions are many since every architecture keeps adding instruction-set
 Specifically, adding them safely must meet three requirements: the existing verifier must still prove every loaded program safe, even though new operations come from untrusted code outside the verifier and the JIT; the kernel change must be small and made once rather than for every new operation; and although native code is specific to each architecture, the verifier's reasoning must remain architecture-independent.
 % 安全地添加它们必须满足三个要求：即使新操作来自验证器和 JIT 之外的不可信代码，现有验证器仍必须证明每个加载的程序安全；内核改动必须小，并且只做一次，而不是每增加一个操作就改一次；尽管本地代码特定于每个架构，验证器的推理必须保持与架构无关。
 
-We present \tool, an extension interface that lets kernel modules introduce new operations without further changes to the kernel core or the verifier.
-% 我们提出 \tool，一种扩展接口，让内核模块能够引入新操作，而无需再修改内核核心或验证器。
+We present \tool, an extension interface that lets kernel modules introduce new operations without further kernel patches or verifier changes.
+% 我们提出 \tool，一种扩展接口，让内核模块能够引入新操作，而无需再打内核补丁或修改验证器。
 Our key insight is that a new operation can be verified by expressing it in vanilla eBPF, while the CPU runs a native implementation of the same operation.
 % 我们的核心洞见是：新操作可以通过用原生 eBPF 表达它来验证，而 CPU 运行的是同一操作的本地实现。
 \tool therefore gives each operation two forms: a \emph{proof sequence} of vanilla (unextended) eBPF and a \emph{native emit} of machine instructions.
@@ -130,8 +130,8 @@ Since the verifier never sees the native emit, the native emit is the only per-o
 % 由于验证器从未看到本地发射，本地发射是每个操作对 TCB 的唯一增加。
 We close this trust gap by proving in Lean 4 that, for each operation, the native emit computes the same result as its proof sequence, which extends the verifier's guarantee to the native code.
 % 因此我们在 Lean 4 中证明，对于每个操作，本地发射与其证明序列计算相同的结果，从而将验证器的保证延伸到本地代码。
-We implement \tool in the Linux kernel and userspace tooling as a small, one-time change to the kernel core, a compile-time recognizer, and kernel modules that supply the operations.
-% 我们在 Linux 内核和用户空间工具中实现 \tool，包括对内核核心的一次性小改动、编译时识别器和提供操作的内核模块。
+We implement \tool in the Linux kernel and userspace tooling as a small, one-time kernel patch, a compile-time recognizer, and kernel modules that supply the operations.
+% 我们在 Linux 内核和用户空间工具中实现 \tool，包括一个小的一次性内核补丁、编译时识别器和提供操作的内核模块。
 
 Using \tool, we build \lang, a first set of seven hardware-idiom operations, including rotate, conditional select, and bit extract.
 % 借助 \tool，我们构建了 \lang，第一组七个硬件习语操作，包括旋转、条件选择和位提取。

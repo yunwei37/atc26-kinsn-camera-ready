@@ -31,8 +31,8 @@ As a result, eBPF runs up to twice as slow as native code, and the clearest loss
 % 因此，eBPF 运行速度比本地代码慢达两倍，最明显的损失来自硬件习语，即 CPU 以单条指令执行、但 eBPF 缺少的操作。
 Current approaches like optimizing the bytecode cannot emit these instructions, adding them to eBPF requires changing the verifier, every JIT, and the compiler, and optimizing in the JIT enlarges the trusted computing base (TCB).
 % 优化字节码无法发射这些指令，把它们加入 eBPF 需要修改验证器、每个 JIT 和编译器，而在 JIT 中优化会扩大可信计算基（TCB）。
-We present \tool, an extension interface that lets kernel modules introduce new operations without further changes to the kernel core or the verifier.
-% 我们提出 \tool，一种扩展接口，让内核模块能够引入新操作，而无需再修改内核核心或验证器。
+We present \tool, an extension interface that lets kernel modules introduce new operations without further kernel patches or verifier changes.
+% 我们提出 \tool，一种扩展接口，让内核模块能够引入新操作，而无需再打内核补丁或修改验证器。
 Our key insight is that a new operation can be verified through an equivalent vanilla eBPF form, while the CPU runs its native implementation.
 % 我们的核心洞见是：新操作可以通过一个等价的原生 eBPF 形式来验证，而 CPU 运行它的本地实现。
 Since the verifier checks only the eBPF form, the native implementation is the only per-operation addition to the TCB, so we prove in Lean 4 that it matches its eBPF form.
