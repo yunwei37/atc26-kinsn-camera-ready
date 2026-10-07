@@ -289,11 +289,11 @@ Safety rests on two arguments: the verifier checks everything \tool adds except 
 % 安全性建立在两个论证之上：验证器检查 \tool 添加的除本地发射外的一切，而本地发射被证明与其证明序列计算相同的结果。
 \tool does not add operation-specific abstract semantics to the verifier.
 % \tool 不向验证器添加操作特定的抽象语义。
-Everything the recognizer and the module contribute reaches the verifier inside the lowered program, which the verifier re-checks on every load with the same analysis as for vanilla eBPF.
+Everything the recognizer and the kernel modules contribute reaches the verifier inside the lowered program, which the verifier re-checks on every load with the same analysis as for vanilla eBPF.
 % 识别器和模块贡献的一切都在降低后的程序内到达验证器，验证器每次加载时都用与原生 eBPF 相同的分析重新检查它。
 A faulty rewrite or proof sequence that violates safety therefore fails verification like any unsafe program.
 % 因此违反安全的错误重写或证明序列会像任何不安全程序一样验证失败。
-Consequently, the userspace recognizer lies outside the safety boundary; a wrong rewrite is either rejected or yields a safe program that computes a different result.
+Consequently, the userspace recognizer lies outside the TCB; a wrong rewrite is either rejected or yields a safe program that computes a different result.
 % 因此用户空间识别器在安全边界之外：错误的重写要么被拒绝，要么得到一个计算结果不同但安全的程序。
 
 The verifier's verdict on the lowered program carries over to the restored program.
