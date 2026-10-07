@@ -79,6 +79,8 @@
 
 Extended Berkeley Packet Filter (eBPF) safely extends OS kernels in domains including networking~\cite{cilium,katran}, observability~\cite{bpftrace,bcc}, security~\cite{krsi_lwn,tracee}, and scheduling~\cite{sched_ext_lwn}.
 % 扩展伯克利数据包过滤器（eBPF）在网络、可观测性、安全和调度等领域安全地扩展操作系统内核。
+Many of these programs run on hot kernel paths, such as once for every packet, so their execution cost directly consumes CPU and limits throughput.
+% 其中许多程序运行在内核热路径上，例如每个数据包运行一次，因此它们的执行开销直接消耗 CPU 并限制吞吐量。
 eBPF's safety comes from a compilation pipeline that verifies every program before execution.
 % eBPF 的安全性来自于在执行前验证每个程序的编译管线。
 A userspace compiler lowers each program to eBPF bytecode, which the in-kernel verifier checks for safety properties such as memory safety and termination.
@@ -96,9 +98,11 @@ The same C code runs up to twice as slow through the pipeline as when compiled d
 % 同样的 C 代码通过该管线运行比直接编译为本地代码慢达两倍。
 An optimizing compiler fed the same verified bytecode recovers most of the gap, confirming that the loss comes from the kernel JIT's per-opcode code generation.
 % 对相同的验证字节码应用优化编译器可恢复大部分差距，证实损失来自内核 JIT 的逐操作码代码生成。
+A significant share of this loss comes from a small set of hardware idioms that the JIT translates one instruction at a time; the rest comes from cross-instruction optimizations such as register allocation.
+% 这部分损失中相当一部分来自一小组被 JIT 逐条翻译的硬件习语；其余来自寄存器分配等跨指令优化。
 
-Existing optimization work stays in userspace because adding optimizations to the kernel JIT is hard.
-% 现有的优化工作留在用户空间，因为向内核 JIT 添加优化很困难。
+Fixing the kernel JIT directly is hard, which is why existing optimization work stays in userspace.
+% 直接修改内核 JIT 很困难，这正是现有优化工作留在用户空间的原因。
 First, any change requires upstream acceptance and a long release cycle.
 % 首先，任何更改都需要上游接受和漫长的发布周期。
 Second, enlarging the JIT enlarges the trusted computing base (TCB), because the verifier checks only the bytecode and cannot verify the native code the JIT emits.
@@ -123,6 +127,8 @@ We present \tool, an extension interface that lets userspace compilers and kerne
 % 我们提出 \tool，一种扩展接口，让用户空间编译器和内核模块能够引入新操作而无需修改内核核心。
 Our key idea is to give each operation two forms, a \emph{proof sequence} of vanilla eBPF instructions that the existing verifier checks, and a \emph{native emit} of machine instructions that the JIT compiles.
 % 我们的核心思想是给每个操作两种形式：现有验证器检查的原生 eBPF 指令\emph{证明序列}，和 JIT 编译的机器指令\emph{本地发射}。
+The verifier needs only some vanilla eBPF with the operation's semantics, not the code that runs, so the same program verifies as vanilla eBPF and runs as native code.
+% 验证器只需要一段具有该操作语义的原生 eBPF，而不需要实际运行的代码，因此同一程序作为原生 eBPF 验证，作为本地代码运行。
 Every proof sequence is vanilla eBPF, so the verifier's reasoning stays architecture-independent while only the native emit differs per architecture.
 % 每个证明序列都是原生 eBPF，因此验证器的推理保持与架构无关，只有本地发射随架构不同。
 A compile-time recognizer rewrites programs to use the new operations.
@@ -131,6 +137,8 @@ The verifier re-checks the proof sequence on every load, so the native emit is t
 % 验证器在每次加载时重新检查证明序列，因此本地发射是每个操作对 TCB 的唯一增加。
 Neither the recognizer nor the proof sequence is part of the TCB: a wrong rewrite is either rejected by the verifier or yields a safe program that computes a different result, so a recognizer bug cannot make a verified program unsafe.
 % 识别器和证明序列都不属于 TCB：错误的重写要么被验证器拒绝，要么得到一个计算结果不同但安全的程序，因此识别器的错误不会使已验证的程序变得不安全。
+Each operation must therefore come with evidence that its native emit computes the same result as its proof sequence.
+% 因此每个操作都必须附带证据，证明其本地发射与其证明序列计算相同的结果。
 
 Hardware idioms are the lowest-hanging fruit for this interface.
 % 硬件习语是这个接口最容易获取的收益。
@@ -142,23 +150,26 @@ The idioms that the kernel JIT compiles poorly form a small, bounded set, so a h
 % 内核 JIT 编译效果差的习语构成一个小的有界集合，因此少量操作即可覆盖最明显的损失。
 With \tool, we build \lang, a set of seven such operations.
 % 借助 \tool，我们构建了 \lang，包含七个这样的操作。
-We prove in Lean 4 that, for each operation, the native emit computes the same result as the proof sequence, carrying the verifier's guarantee to the native code.
-% 我们在 Lean 4 中证明，对于每个操作，本地发射与证明序列计算相同的结果，将验证器的保证传递到本地代码。
+For each operation, we prove in Lean 4 that the native emit computes the same result as the proof sequence, which supplies the evidence and carries the verifier's guarantee to the native code.
+% 对于每个操作，我们在 Lean 4 中证明本地发射与证明序列计算相同的结果，这提供了所需的证据，并将验证器的保证传递到本地代码。
 
 We implement \tool in the Linux kernel and in userspace tooling, as a small, one-time change to the kernel core, a compile-time recognizer, and kernel modules that supply the operations.
 % 我们在 Linux 内核和用户空间工具中实现 \tool，包括对内核核心的一次性小改动、编译时识别器和提供操作的内核模块。
-A new operation ships as a kernel module, and the existing verifier analysis stays untouched.
-% 新操作作为内核模块发布，现有验证器分析保持不变。
+A new operation ships as a kernel module without another kernel change, and the existing verifier analysis stays untouched.
+% 新操作作为内核模块发布，无需再改动内核，现有验证器分析保持不变。
 \lang speeds up eBPF microbenchmarks by 24\% on x86-64 and 22\% on ARM64 in geometric mean over the unmodified pipeline, recovering 42\% of the x86-64 gap to native code, and improves production application throughput by up to 12\%.
 % \lang 使 eBPF 微基准测试的几何平均在 x86-64 上提速 24\%，在 ARM64 上提速 22\%，恢复了 x86-64 上与本地代码差距的 42\%，并使生产应用吞吐量提高达 12\%。
+Application gains are smaller because a real datapath spends most of its time in helper calls, map accesses, and tail calls, which instruction selection cannot reach.
+% 应用层收益较小，因为真实的数据通路大部分时间花在 helper 调用、map 访问和尾调用上，这些是指令选择无法触及的。
 Native code size shrinks by 12--23\% with no change to the existing verifier analysis (\S\ref{sec:eval}).
 % 本地代码大小缩减 12--23\%，现有验证器分析无需更改。
-The same \tool mechanism also supports whole-program native replacement, reaching 2.358$\times$ on Cilium at the cost of trusting the application's native code (\S\ref{subsec:native_upper_bound}).
-% 同样的 \tool 机制还支持整个程序的本地替换，以信任应用本地代码为代价在 Cilium 上达到 2.358 倍。
+The same \tool mechanism also supports whole-program native replacement, reaching 2.358$\times$ on Cilium when the application's whole native code is trusted, which bounds what a larger TCB can buy (\S\ref{subsec:native_upper_bound}).
+% 同样的 \tool 机制还支持整个程序的本地替换，在信任应用全部本地代码时在 Cilium 上达到 2.358 倍，这给出了更大 TCB 所能换来的性能上限。
 
 \noindent\textbf{Contributions.}
 We make the following contributions:
 \begin{itemize}
+    \item We characterize the eBPF-native performance gap and attribute it to the kernel JIT's per-opcode code generation, with a significant share from a small set of hardware idioms (\S\ref{sec:characterization}).
     \item We present \tool, a mechanism that extends the eBPF compilation pipeline with new operations while reusing the existing verifier for safety (\S\ref{sec:mechanism}).
     \item With \tool, we build \lang, a set of seven hardware-idiom operations that the simple kernel JIT emits directly (\S\ref{sec:lang}).
     \item We prove in Lean 4 that each \lang native emit computes the same result as its proof sequence (\S\ref{sec:formal-verification}).
