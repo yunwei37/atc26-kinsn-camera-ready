@@ -243,7 +243,7 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \label{subsec:adding}
 % 两种形式的操作
 
-The proof sequence of an operation is a fragment of vanilla eBPF with the same semantics as its extended instruction, and the native emit is the machine code that implements the same semantics on one architecture.
+An operation's proof sequence is a fragment of vanilla eBPF with the same semantics as its extended instruction, and its native emit is the machine code that implements the same semantics on one architecture.
 % 操作的证明序列是与其扩展指令语义相同的原生 eBPF 片段，本地发射是在某一架构上实现相同语义的机器代码。
 Because extended instructions reuse existing eBPF opcodes, \tool adds no new opcode.
 % 扩展指令重用现有的 eBPF 操作码，因此 \tool 不添加新操作码。
@@ -258,21 +258,21 @@ A new operation needs only a pattern in the recognizer and one or more kernel mo
 
 An extended instruction passes through three stages: recognition in userspace, verification in the kernel, and execution through the JIT.
 % 扩展指令经过三个阶段：用户空间中的识别、内核中的验证，以及经由 JIT 的执行。
-The recognizer matches the patterns of supported operations in userspace, before the program loads (\S\ref{subsec:llvm}).
+In userspace, before the program loads, the recognizer matches the patterns of supported operations (\S\ref{subsec:llvm}).
 % 识别器在程序加载前在用户空间匹配支持的操作模式。
 In Figure~\ref{fig:pipeline}, it rewrites the shifts and bitwise OR of a 64-bit left rotate by 16 (\ding{172}) into an extended instruction whose operands name \texttt{r7} as source and destination and 16 as the rotate amount (\ding{173}).
 % 在图中，识别器将 64 位左旋 16 位的移位和按位或（①）重写为一条扩展指令，其操作数指定 r7 为源和目标、16 为旋转量（②）。
 
-The verifier checks an extended instruction by lowering it to vanilla eBPF.
+To check an extended instruction, the verifier lowers it to vanilla eBPF.
 % 验证器通过将扩展指令降低为原生 eBPF 来检查它。
 Before the main analysis, a lowering stage substitutes the proof sequence for the extended instruction (\ding{174}).
 % 在主分析之前，降低阶段用证明序列替换扩展指令（③）。
-The verifier then analyzes the lowered program with its existing analysis, and after the analysis succeeds, a restore stage reinstates the extended instructions for the JIT (\ding{175}).
+Once the existing analysis accepts the lowered program, a restore stage reinstates the extended instructions for the JIT (\ding{175}).
 % 然后验证器用其现有分析检查降低后的程序，分析成功后，恢复阶段为 JIT 恢复扩展指令（④）。
-The proof sequence can differ across architectures when an operation splits differently (\S\ref{sec:lang}), but because every variant is vanilla eBPF checked by the same analysis, the verifier needs no architecture-specific logic.
+Proof sequences can differ across architectures when an operation splits differently (\S\ref{sec:lang}), but because every variant is vanilla eBPF checked by the same analysis, the verifier needs no architecture-specific logic.
 % 当操作在不同架构上拆分方式不同时，证明序列可以不同，但每个变体都是由同一分析检查的原生 eBPF，因此验证器不需要任何架构特定的逻辑。
 
-The JIT dispatches each extended instruction to the operation's native emit for the running architecture.
+During code generation, the JIT dispatches each extended instruction to the operation's native emit for the running architecture.
 % JIT 将每条扩展指令分派到该操作对应运行架构的本地发射。
 For the rotate, it emits a single \texttt{ROL} on x86-64, here \texttt{rol r13, 16} with \texttt{r13} holding eBPF register \texttt{r7} (\ding{176}), or a single \texttt{ROR} on ARM64.
 % 对于旋转，它在 x86-64 上发射单条 ROL，此处为 rol r13, 16，r13 保存 eBPF 寄存器 r7（⑤），在 ARM64 上发射单条 ROR。
@@ -293,21 +293,21 @@ Everything the recognizer and the module contribute reaches the verifier inside 
 % 识别器和模块贡献的一切都在降低后的程序内到达验证器，验证器每次加载时都用与原生 eBPF 相同的分析重新检查它。
 A faulty rewrite or proof sequence that violates safety therefore fails verification like any unsafe program.
 % 因此违反安全的错误重写或证明序列会像任何不安全程序一样验证失败。
-The userspace recognizer thus lies outside the safety boundary; a wrong rewrite is either rejected or yields a safe program that computes a different result.
+Consequently, the userspace recognizer lies outside the safety boundary; a wrong rewrite is either rejected or yields a safe program that computes a different result.
 % 因此用户空间识别器在安全边界之外：错误的重写要么被拒绝，要么得到一个计算结果不同但安全的程序。
 
 The verifier's verdict on the lowered program carries over to the restored program.
 % 验证器对降低后程序的裁决传递到恢复后的程序。
-The restore stage collapses each \emph{proof region}, the span its proof sequence occupies, back into its extended instruction and changes nothing else.
+During restore, each \emph{proof region}, the span its proof sequence occupies, collapses back into its extended instruction, and nothing else changes.
 % 恢复阶段将每个\emph{证明区域}（其证明序列占据的范围）折叠回其扩展指令，其他不变。
 For the collapse to preserve the verdict, control must enter a region only at its top and leave only past its end, like a single instruction.
 % 为使折叠保持裁决，控制只能从区域顶部进入、只能从末尾之后离开，像单条指令一样。
-The kernel validates at load time that each region has a single entry and a single exit and contains no nested extended instructions, calls, or exits; regions must also contain no backward jumps.
+At load time, the kernel validates that each region has a single entry and a single exit and contains no nested extended instructions, calls, or exits; regions must also contain no backward jumps.
 % 内核在加载时验证每个区域单入口单出口，且不含嵌套扩展指令、调用或退出；区域还必须不含向后跳转。
 
-The trusted path then consists of the existing eBPF verifier and JIT plus the kernel core, which validates proof regions, lowers extended instructions before verification, restores them after verification, and dispatches their native emits (\S\ref{sec:implementation}).
+What remains trusted is the existing eBPF verifier and JIT plus the kernel core, which validates proof regions, lowers extended instructions before verification, restores them after verification, and dispatches their native emits (\S\ref{sec:implementation}).
 % 因此可信路径包括现有的 eBPF 验证器和 JIT，加上内核核心，它验证证明区域、在验证前降低扩展指令、在验证后恢复它们、并分派它们的本地发射。
-The per-operation native emit is the one component whose correctness \tool cannot check at load time.
+Of these components, only the per-operation native emit escapes any check at load time.
 % 每操作本地发射是 \tool 无法在加载时检查其正确性的唯一组件。
 Each operation must then supply evidence that its native emit computes the same result as its proof sequence on every register and memory location the program can read afterwards.
 % 因此每个操作必须提供证据，证明其本地发射在程序之后可读的每个寄存器和内存位置上与其证明序列计算相同的结果。
@@ -321,7 +321,7 @@ Prefetch is modeled as an architectural no-op; microarchitectural effects such a
 % 预取被建模为架构空操作；缓存状态等微架构效果在模型之外。
 We model each eBPF and native instruction by its effect on registers and memory, and a sequence by applying these effects in order; we write the eBPF and x86-64 models ourselves, and the ARM64 models follow LNSym~\cite{lnsym}.
 % 我们用每条 eBPF 和本地指令对寄存器和内存的作用来建模，指令序列则按顺序应用这些作用；eBPF 和 x86-64 模型由我们编写，ARM64 模型参照 LNSym。
-The proofs assume a proof sequence the verifier accepts and an initial state the verifier considers safe.
+We assume a proof sequence the verifier accepts and an initial state the verifier considers safe.
 % 证明假设证明序列已被验证器接受，且初始状态被验证器视为安全。
 
 The two forms meet in a hardware-independent specification of each operation.
@@ -335,7 +335,7 @@ Because both results equal the specification, the destination registers agree, a
 Each \lang operation is proved the same way.
 % 每个 \lang 操作都以同样的方式证明。
 
-What is trusted is therefore the instruction models, Lean itself, and each emit function's encoding of the modeled instructions; the specification need not be trusted, since the lemmas give equality whatever it says.
+Trust in the proofs therefore rests on the instruction models, Lean itself, and each emit function's encoding of the modeled instructions; the specification need not be trusted, since the lemmas give equality whatever it says.
 % 因此需要信任的是指令模型、Lean 本身，以及每个发射函数对所建模指令的编码；规范无需信任，因为无论规范是什么，引理都给出相等。
 Neither instruction set is translated into the other; both are modeled in one Lean development and meet only in the specification.
 % 两套指令集之间没有相互翻译：两者在同一个 Lean 开发中建模，只在规范处相遇。
@@ -354,18 +354,18 @@ The seven operations are a deliberate choice. Because the idioms of the kind \S\
 % 这七个操作是刻意的选择：\S\ref{subsec:char-idiom} 所特征化的这类习语很少，因此少数模块就覆盖了内核 JIT 最明显的损失。
 Each proof sequence stays a small fragment of the program, and the equivalence evidence each operation owes covers only that fragment.
 % 每个证明序列都是程序的一小片段，每个操作所需的等价证据只覆盖该片段。
-The compiler emits six of the seven idioms as fixed bytecode patterns, which the recognizer matches in place.
+Six of the seven idioms appear as fixed bytecode patterns that the recognizer matches in place.
 % 编译器将七个习语中的六个发射为固定的字节码模式，识别器就地匹配。
-The prefetch alone has no eBPF form of any length, so the recognizer inserts it at sites it selects, with a no-op proof sequence.
+Only the prefetch has no eBPF form of any length, so the recognizer inserts it at sites it selects, with a no-op proof sequence.
 % 只有预取没有任何长度的 eBPF 形式，因此识别器在其选择的位置插入它，使用空操作证明序列。
 
 Table~\ref{tab:descriptors} lists the seven operations, each with its proof sequence and its native emit on x86-64 and ARM64.
 % 表列出了七个操作，每个都有其证明序列及其在 x86-64 和 ARM64 上的本地发射。
-The native emits differ across architectures, in shape and in availability.
+Native emits differ across architectures in shape and in availability.
 % 本地发射在架构间的形状和可用性上有所不同。
 A conditional select compiles to one extended instruction on x86-64, emitting the \texttt{CMP+CMOV} pair, and to two extended instructions on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
 % 条件选择在 x86-64 上编译为一条扩展指令，发射 CMP+CMOV 对，在 ARM64 上编译为两条扩展指令，一条发射 TST，一条发射 CSEL，因此识别器针对程序将要加载的架构进行重写。
-The byte swap, fused with its load, splits the same way on ARM64, into an \texttt{LDR} and a \texttt{REV}.
+On ARM64, the load-fused byte swap splits the same way, into an \texttt{LDR} and a \texttt{REV}.
 % 与加载融合的字节交换在 ARM64 上以相同方式分割，成为 LDR 和 REV。
 One operation, the address computation \texttt{LEA}, exists on x86-64 alone.
 % 一个操作，地址计算 LEA，仅存在于 x86-64。
