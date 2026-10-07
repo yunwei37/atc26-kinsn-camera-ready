@@ -77,39 +77,38 @@
 \section{Introduction}
 \label{sec:introduction}
 
-Extended Berkeley Packet Filter (eBPF) safely extends OS kernels in domains including networking~\cite{cilium,katran}, observability~\cite{bpftrace,bcc}, security~\cite{krsi_lwn,tracee}, and scheduling~\cite{sched_ext_lwn}.
-% 扩展伯克利数据包过滤器（eBPF）在网络、可观测性、安全和调度等领域安全地扩展操作系统内核。
-Its safety comes from a compilation pipeline that verifies every program before execution: a userspace compiler lowers each program to eBPF bytecode, the in-kernel verifier checks the bytecode for safety properties such as memory safety and termination, and the kernel's just-in-time compiler (the kernel JIT) translates the verified bytecode to native code.
+Extended Berkeley Packet Filter (eBPF) safely extends OS kernels and is widely used in production, in domains including networking~\cite{cilium,katran}, observability~\cite{bpftrace,bcc}, security~\cite{krsi_lwn,tracee}, and scheduling~\cite{sched_ext_lwn}.
+% 扩展伯克利数据包过滤器（eBPF）安全地扩展操作系统内核，并在生产中被广泛使用，涵盖网络、可观测性、安全和调度等领域。
+Its safety comes from a compilation pipeline that verifies every program before execution. In eBPF, a userspace compiler lowers each program to eBPF bytecode, the in-kernel verifier checks the bytecode for safety properties such as memory safety and termination, and the kernel's just-in-time compiler (the kernel JIT) translates the verified bytecode to native code.
 % 其安全性来自在执行前验证每个程序的编译管线：用户空间编译器将程序降低为 eBPF 字节码，内核验证器检查字节码的内存安全和终止性等安全属性，内核即时编译器（内核 JIT）再将验证后的字节码翻译为本地代码。
-To stay trustworthy, the kernel JIT is deliberately simple and translates one opcode at a time.
-% 为了保持可信，内核 JIT 被刻意保持简单，一次只翻译一个操作码。
+The eBPF design favor safety over speed: the eBPF instruction set is designed to be verifiable and portable, and because the verifier checks only the bytecode, the kernel must trust the JIT and keeps it deliberately simple, translating one opcode at a time.
+% 指令集和 JIT 都偏重安全而非速度：eBPF 指令集是为可验证和可移植而设计的；而由于验证器只检查字节码，内核必须信任 JIT，因此刻意保持 JIT 简单，一次只翻译一个操作码。
 Yet many eBPF programs run on hot kernel paths, such as once for every packet, where performance is critical.
 % 然而许多 eBPF 程序运行在内核热路径上，例如每个数据包运行一次，此时性能至关重要。
 
-This simplicity comes at a cost.
-% 这种简单是有代价的。
+This design comes at a cost.
+% 这种设计是有代价的。
 The same C code runs up to twice as slow through the eBPF pipeline as when compiled directly to native code (\S\ref{sec:characterization}).
 % 同样的 C 代码经过 eBPF 管线运行，比直接编译为本地代码慢达两倍。
-Because an optimizing compiler\cite{bpftime} fed the same verified bytecode recovers most of this gap, the loss lies in the kernel JIT's per-opcode code generation rather than in the bytecode itself.
+Because an optimizing compiler~\cite{zheng2025extending} fed the same verified bytecode recovers most of this gap, the loss lies in the kernel JIT's per-opcode code generation rather than in the bytecode itself.
 % 由于对相同的验证字节码应用优化编译器可恢复大部分差距，损失在于内核 JIT 的逐操作码代码生成，而不在字节码本身。
 
 The clearest losses come from \emph{hardware idioms}: operations such as rotate, conditional select, and bit extract that a CPU usually executes as a single instruction but for which the eBPF instruction set has no single-instruction form.
 % 最明显的损失来自\emph{硬件习语}：旋转、条件选择和位提取等操作，CPU 通常以单条指令执行它们，而 eBPF 指令集没有对应的单指令形式。
-Yet, current optimization happens mostly in userspace, so even dedicated optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs within the instruction set.
-% 优化几乎完全发生在用户空间，即使 Merlin、K2 和 EPSO 等专用优化器也只在指令集内重写程序。
-The idioms therefore reach the kernel as multi-instruction sequences, which the per-opcode JIT translates instruction by instruction.
-% 因此这些习语以多指令序列的形式到达内核，逐操作码的 JIT 再逐条翻译它们。
 A 64-bit rotate with a variable shift, for example, is a single \texttt{ROL} instruction on x86-64, but it reaches the kernel JIT as eight bytecode instructions and leaves as 15 machine instructions.
 % 例如，64 位可变位移旋转在 x86-64 上是单条 ROL 指令，却以 8 条字节码指令到达内核 JIT，并以 15 条机器指令离开。
-Native optimization after verification~\cite{shahinfar2026fun} avoids this loss, but it must trust its own translator.
-% 验证之后的本地优化可以避免这种损失，但它必须信任其自身的翻译器。
 
-We therefore aim to let the kernel JIT emit these idioms as native instructions while keeping it simple.
-% 因此，我们的目标是让内核 JIT 能以本地指令发射这些习语，同时保持其简单。
-Because the idioms that the JIT compiles poorly form a small, bounded set, a handful of additions suffices.
-% 由于 JIT 编译效果差的习语构成一个小的有界集合，少量添加即可。
-The alternative of placing an optimizing compiler in the kernel would enlarge the trusted computing base (TCB): the verifier checks only the bytecode, so the kernel would have to trust a compiler far larger than the per-opcode JIT, and the kernel code maintained for each architecture would grow.
-% 另一种做法是在内核中放一个优化编译器，这会扩大可信计算基（TCB）：验证器只检查字节码，因此内核将不得不信任一个远大于逐操作码 JIT 的编译器，而且每个架构需要维护的内核代码也会增加。
+Two intuitive approaches fall short.
+% 两种直觉上的方案都有不足。
+Optimizing the bytecode cannot emit the missing instructions: dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs within the instruction set, thus still unable to generate the native instructions that the CPU can execute efficiently.
+% 优化字节码无法发射缺失的指令：Merlin、K2 和 EPSO 等专用 eBPF 优化器只在指令集内重写程序，因此仍然无法生成 CPU 可以高效执行的本地指令。
+Optimizing to native code, whether by replacing the simple JIT with an optimizing compiler or by optimizing after verification~\cite{shahinfar2026fun}, would enlarge the trusted computing base (TCB) with a large compiler whose translation the kernel must trust, and in the kernel it would also grow the code maintained for each architecture.
+% 优化到本地代码，无论是用优化编译器替换简单的 JIT，还是在验证之后再优化，都会用一个内核必须信任其翻译的大型编译器扩大可信计算基（TCB），而放在内核中还会增加每个架构需要维护的代码。
+
+We instead keep the kernel JIT simple and extend the eBPF instruction set with a handful of new operations, \emph{extended instructions} that the JIT emits as native instructions.
+% 我们转而保持内核 JIT 简单，用少量新操作扩展 eBPF 指令集，即 JIT 以本地指令发射的\emph{扩展指令}。
+A handful suffices because the idioms that the JIT compiles poorly form a small, bounded set.
+% 少量即可，因为 JIT 编译效果差的习语构成一个小的有界集合。
 More generally, emitting the idioms is an instance of extending a verified compilation pipeline with new operations while keeping the TCB small.
 % 更一般地说，发射这些习语是在保持 TCB 小的同时用新操作扩展一个经过验证的编译管线的一个实例。
 
@@ -122,8 +121,8 @@ Second, because the verifier and the JIT embody years of analysis and formal ver
 Third, although native code is specific to each architecture, the verifier's reasoning must remain architecture-independent.
 % 第三，尽管本地代码特定于每个架构，验证器的推理必须保持与架构无关。
 
-We present \tool, an extension interface that lets userspace compilers and kernel modules introduce new operations without modifying the kernel core.
-% 我们提出 \tool，一种扩展接口，让用户空间编译器和内核模块能够引入新操作而无需修改内核核心。
+We present \tool, an extension interface that lets userspace compilers and kernel modules introduce new operations without modifying the kernel core and verifier.
+% 我们提出 \tool，一种扩展接口，让用户空间编译器和内核模块能够引入新操作而无需修改内核核心和验证器。
 Our key insight is that the verifier does not need to see the code that runs: any vanilla eBPF sequence with the same semantics suffices for its analysis.
 % 我们的核心洞见是：验证器不需要看到实际运行的代码，任何语义相同的原生 eBPF 序列都足以供其分析。
 \tool therefore gives each operation two forms: a \emph{proof sequence} of vanilla (unextended) eBPF that the existing verifier checks, and a \emph{native emit} that the CPU runs.
