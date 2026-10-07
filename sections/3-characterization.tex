@@ -277,15 +277,7 @@ Such a compiler would also grow the kernel code that must be maintained and audi
 A practical fix instead keeps the simple kernel JIT and targets the idiom share of the loss by letting the JIT emit hardware idioms directly.
 % 实际的修复方案是保持简单的内核 JIT，通过让 JIT 直接发射硬件习语来针对损失中的习语份额。
 
-Emitting the idioms from the simple kernel JIT must meet three constraints, which the next section addresses.
-% 从简单内核 JIT 发射习语必须满足三个约束，下一节将讨论。
-First, the verifier must still prove every program safe, which keeps eBPF's existing guarantee unchanged.
-% 首先，验证器必须仍能证明每个程序是安全的，这保持 eBPF 现有保证不变。
-Second, adding an operation must not require rewriting the verifier or the JIT, which keeps the kernel change small and one-time.
-% 其次，添加操作不能要求重写验证器或 JIT，这保持内核改动小且只做一次。
-Third, one operation may map to a different native instruction on each architecture, while its verification stays architecture-independent.
-% 第三，一个操作可以在每个架构上映射到不同的本地指令，而对它的验证保持与架构无关。
-Within these constraints the fix targets the operations C-RQ3 identifies.
-% 在这些约束下，修复针对 C-RQ3 识别的操作。
+The fix targets the operations C-RQ3 identifies, and \S\ref{sec:mechanism} presents a design that achieves it.
+% 这一修复针对 C-RQ3 识别出的操作，\S\ref{sec:mechanism} 给出实现它的设计。
 The in-kernel execution cost (C-RQ1) and the share of the gap due to the bytecode itself (C-RQ2) stay out of scope, and \S\ref{sec:eval} measures how much of the kernel JIT's loss the idioms carry.
 % 内核内执行代价（C-RQ1）和由字节码本身造成的那部分差距（C-RQ2）不在范围内，评估测量习语承载了多少内核 JIT 的损失。

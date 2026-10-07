@@ -87,12 +87,12 @@
 \label{sec:mechanism}
 % \tool：扩展 eBPF 编译管线
 
-\tool is designed to meet the three constraints of \S\ref{subsec:char-challenges}.
-% \tool 的设计目标是满足 \S\ref{subsec:char-challenges} 的三个约束。
+\tool is designed to meet three constraints.
+% \tool 的设计目标是满足三个约束。
 First, the verifier must still prove every program safe, which keeps eBPF's existing guarantee unchanged (\S\ref{subsec:safety}).
 % 第一，验证器必须仍然证明每个程序安全，从而保持 eBPF 现有的保证不变。
-Second, adding an operation must not require rewriting the verifier or the JIT core, which keeps the kernel change small and one-time (\S\ref{subsec:adding}).
-% 第二，添加操作不得要求重写验证器或 JIT 核心，从而使内核改动小且只做一次。
+Second, adding an operation must not require rewriting the verifier or the JIT, which keeps the kernel change small and one-time (\S\ref{subsec:adding}).
+% 第二，添加操作不得要求重写验证器或 JIT，从而使内核改动小且只做一次。
 Third, one operation may map to a different native instruction on each architecture, while its verification stays architecture-independent (\S\ref{subsec:pipeline}).
 % 第三，一个操作可以在每个架构上映射到不同的本地指令，而对它的验证保持与架构无关。
 

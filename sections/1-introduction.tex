@@ -116,8 +116,8 @@ Specifically, adding them safely must meet three requirements: the existing veri
 
 We present \tool, an extension interface that lets userspace compilers and kernel modules introduce new operations without further changes to the kernel core or the verifier.
 % 我们提出 \tool，一种扩展接口，让用户空间编译器和内核模块能够引入新操作，而无需再修改内核核心或验证器。
-Our key insight is that the verifier does not need to see the code that runs: any vanilla eBPF sequence with the same semantics suffices for its analysis.
-% 我们的核心洞见是：验证器不需要看到实际运行的代码，任何语义相同的原生 eBPF 序列都足以供其分析。
+Our key insight is that a new operation can be verified by expressing it in vanilla eBPF, while the CPU runs a native implementation of the same operation.
+% 我们的核心洞见是：新操作可以通过用原生 eBPF 表达它来验证，而 CPU 运行的是同一操作的本地实现。
 \tool therefore gives each operation two forms, a \emph{proof sequence} of vanilla (unextended) eBPF that the existing verifier checks, and a \emph{native emit} that the CPU runs.
 % 因此 \tool 给每个操作两种形式：现有验证器检查的原生（未扩展）eBPF \emph{证明序列}，和 CPU 运行的\emph{本地发射}。
 Because every proof sequence is vanilla eBPF, verification remains architecture-independent.
