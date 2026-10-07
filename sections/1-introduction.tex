@@ -107,7 +107,7 @@ Third, native code is architecture-specific, so a larger JIT grows the per-archi
 % 第三，本地代码是架构特定的，因此更大的 JIT 会增加每架构的内核代码。
 The verifier and the JIT carry years of analysis and formal verification~\cite{nelson2020specification,vishwanathan2023verifying}, so any kernel change must stay small.
 % 验证器和 JIT 承载了多年的分析和形式化验证，因此任何内核更改都必须保持小。
-Existing optimization work therefore stays in userspace: dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs within the eBPF instruction set, but cannot emit native instructions the instruction set lacks, and native optimization after verification~\cite{shahinfar2026fun} must trust its own translator.
+Current therefore stays in userspace: dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs but cannot emit native instructions the instruction set lacks, and native optimization after verification~\cite{shahinfar2026fun} must trust its own translator.
 % 因此现有的优化工作留在用户空间：Merlin、K2 和 EPSO 等专用 eBPF 优化器在 eBPF 指令集内重写程序，但无法发射指令集缺少的本地指令；而验证之后的本地优化必须信任其自身的翻译器。
 
 Emitting native instructions that the eBPF instruction set lacks is an instance of a more general problem, extending a verified compilation pipeline with new operations while keeping the TCB small.
