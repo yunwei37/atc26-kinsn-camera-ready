@@ -126,16 +126,15 @@ A compile-time recognizer rewrites programs to use the new operations, and the v
 % 编译时识别器重写程序以使用新操作，验证器在每次加载时重新检查证明序列。
 Neither the recognizer nor the proof sequences are part of the TCB, so a recognizer bug cannot make a verified program unsafe.
 % 识别器和证明序列都不属于 TCB，因此识别器的错误不会使已验证的程序变得不安全。
-
-Using \tool, we build \lang, a first set of seven hardware-idiom operations, including rotate, conditional select, and bit extract.
-% 借助 \tool，我们构建了 \lang，第一组七个硬件习语操作，包括旋转、条件选择和位提取。
 Since the verifier never sees the native emit, the native emit is the only per-operation addition to the TCB.
 % 由于验证器从未看到本地发射，本地发射是每个操作对 TCB 的唯一增加。
 We close this gap by proving in Lean 4 that, for each operation, the native emit computes the same result as its proof sequence, which extends the verifier's guarantee to the native code.
 % 因此我们在 Lean 4 中证明，对于每个操作，本地发射与其证明序列计算相同的结果，从而将验证器的保证延伸到本地代码。
-
 We implement \tool in the Linux kernel and userspace tooling as a small, one-time change to the kernel core, a compile-time recognizer, and kernel modules that supply the operations.
 % 我们在 Linux 内核和用户空间工具中实现 \tool，包括对内核核心的一次性小改动、编译时识别器和提供操作的内核模块。
+
+Using \tool, we build \lang, a first set of seven hardware-idiom operations, including rotate, conditional select, and bit extract.
+% 借助 \tool，我们构建了 \lang，第一组七个硬件习语操作，包括旋转、条件选择和位提取。
 On microbenchmarks, \lang speeds up eBPF programs by 24\% on x86-64 and 22\% on ARM64 in geometric mean over the unmodified pipeline, recovering 42\% of the x86-64 gap to native code, and it shrinks native code by 12--23\%.
 % 在微基准测试上，\lang 相对未修改的管线使 eBPF 在 x86-64 上几何平均提速 24\%，在 ARM64 上提速 22\%，恢复了 x86-64 上与本地代码差距的 42\%，并使本地代码缩小 12--23\%。
 On production applications, it improves throughput by up to 12\%; the gains are smaller because a real datapath spends most of its time in helper calls, map accesses, and tail calls, which instruction selection cannot reach (\S\ref{sec:eval}).

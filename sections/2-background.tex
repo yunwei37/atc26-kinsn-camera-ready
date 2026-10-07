@@ -48,7 +48,7 @@ This section describes the three stages of the eBPF compilation pipeline, with a
 % 本节描述 eBPF 编译管线的三个阶段，关注每个阶段对程序的优化程度以及每个阶段都遵守的指令集边界。
 Every eBPF program reaches the kernel through the pipeline, shown in Figure~\ref{fig:ebpf}.
 % 每个 eBPF 程序都通过图中所示的管线到达内核。
-A user-space compiler produces bytecode, which the kernel verifies and JIT-compiles.
+A userspace compiler produces bytecode, which the kernel verifies and JIT-compiles.
 % 用户空间编译器生成字节码，内核验证并 JIT 编译。
 The compiled program then attaches to a hook such as XDP or tc.
 % 编译后的程序附加到 XDP 或 tc 等钩子。
@@ -57,7 +57,7 @@ The compiled program then attaches to a hook such as XDP or tc.
 
 \noindent\textbf{Source compilation.}
 % \noindent\textbf{源代码编译。}
-The user-space compiler does most of the pipeline's optimization.
+The userspace compiler does most of the pipeline's optimization.
 % 用户空间编译器完成管线的大部分优化。
 A language front end such as Clang lowers the source to LLVM IR, and LLVM's middle end runs its full optimization passes.
 % 语言前端如 Clang 将源代码降低为 LLVM IR，LLVM 中端运行完整的优化遍。
@@ -82,16 +82,16 @@ The analysis proceeds opcode by opcode, over the 123 opcodes the instruction set
 % 分析逐操作码进行，覆盖指令集定义的 123 个操作码。
 An opcode the instruction set does not define is rejected.
 % 指令集未定义的操作码会被拒绝。
-The rejection makes the instruction set a hard boundary for every upstream optimizer, so the idioms reach the JIT as multi-instruction sequences.
-% 这种拒绝使指令集成为每个上游优化器的硬边界，因此习语以多指令序列形式到达 JIT。
+The rejection makes the instruction set a hard boundary for every upstream optimizer.
+% 这种拒绝使指令集成为每个上游优化器的硬边界。
+The only existing way past this boundary is to call a \emph{kfunc}, a native kernel function that a loadable module registers with BTF type metadata~\cite{kfuncs}.
+% 目前越过这一边界的唯一方式是调用 kfunc，即由可加载模块使用 BTF 类型元数据注册的本地内核函数。
 After a program passes, the verifier applies only a few targeted rewrites, such as dead-code elimination.
 % 程序通过后，验证器只应用少量定向重写，如死代码消除。
 A few systems also optimize at this load-time stage, such as KFuse~\cite{kfuse}, which merges verified programs within the instruction set.
 % 少数系统也在这个加载时阶段优化，如 KFuse，它在指令集内合并已验证的程序。
 The verifier then passes the program to the JIT.
 % 然后验证器将程序传递给 JIT。
-The kernel also exposes \emph{kfuncs}, native kernel functions that eBPF programs may call, registered by loadable modules with BTF type metadata~\cite{kfuncs}; \tool reuses this registration infrastructure (\S\ref{subsec:kernel}).
-% 内核还暴露 kfunc，即 eBPF 程序可以调用的本地内核函数，由可加载模块使用 BTF 类型元数据注册；\tool 重用此注册基础设施。
 
 \noindent\textbf{JIT compilation.}
 % \noindent\textbf{JIT 编译。}
