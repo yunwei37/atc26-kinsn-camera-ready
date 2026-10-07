@@ -107,26 +107,24 @@ Third, native code is architecture-specific, so a larger JIT grows the per-archi
 % 第三，本地代码是架构特定的，因此更大的 JIT 会增加每架构的内核代码。
 The verifier and the JIT carry years of analysis and formal verification~\cite{nelson2020specification,vishwanathan2023verifying}, so any kernel change must stay small.
 % 验证器和 JIT 承载了多年的分析和形式化验证，因此任何内核更改都必须保持小。
-Current therefore stays in userspace: dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs but cannot emit native instructions the instruction set lacks, and native optimization after verification~\cite{shahinfar2026fun} must trust its own translator.
-% 因此现有的优化工作留在用户空间：Merlin、K2 和 EPSO 等专用 eBPF 优化器在 eBPF 指令集内重写程序，但无法发射指令集缺少的本地指令；而验证之后的本地优化必须信任其自身的翻译器。
+As a result, dedicated eBPF optimizers such as Merlin~\cite{mao2024merlin}, K2~\cite{xu2021synthesizing}, and EPSO~\cite{zhu2025epso} rewrite programs but cannot emit native instructions the instruction set lacks, and native optimization after verification~\cite{shahinfar2026fun} must trust its own translator.
+% 因此，Merlin、K2 和 EPSO 等专用 eBPF 优化器只能重写程序，无法发射指令集缺少的本地指令；而验证之后的本地优化必须信任其自身的翻译器。
 
-Emitting native instructions that the eBPF instruction set lacks is an instance of a more general problem, extending a verified compilation pipeline with new operations while keeping the TCB small.
-% 发射 eBPF 指令集缺少的本地指令，是一个更一般问题的实例：在保持 TCB 小的同时，用新操作扩展一个经过验证的编译管线。
-Any such extension must keep eBPF's safety guarantee intact, with the existing verifier proving every loaded program safe.
-% 任何这样的扩展都必须保持 eBPF 的安全保证不变，由现有验证器证明每个加载的程序安全。
-New operations, however, arrive from untrusted code outside the verifier and the JIT.
-% 然而，新操作来自验证器和 JIT 之外的不可信代码。
-The verifier and the JIT also carry years of analysis and formal verification~\cite{nelson2020specification,vishwanathan2023verifying}.
-% 验证器和 JIT 还承载了多年的分析和形式化验证。
-The kernel change for new operations must therefore stay small and one-time.
-% 因此，为新操作所做的内核改动必须小且只做一次。
-The native code is specific to each architecture, while the verifier's reasoning must stay architecture-independent.
-% 本地代码特定于每个架构，而验证器的推理必须保持与架构无关。
+Emitting native instructions that the instruction set lacks therefore requires extending a verified compilation pipeline with new operations while keeping the TCB small, and such an extension must meet three requirements.
+% 因此，要发射指令集缺少的本地指令，就需要在保持 TCB 小的同时用新操作扩展一个经过验证的编译管线，而这样的扩展必须满足三个要求。
+First, the existing verifier must still prove every loaded program safe, even though new operations arrive from untrusted code outside the verifier and the JIT.
+% 第一，即使新操作来自验证器和 JIT 之外的不可信代码，现有验证器仍必须证明每个加载的程序安全。
+Second, the kernel change for new operations must stay small and one-time.
+% 第二，为新操作所做的内核改动必须小且只做一次。
+Third, while the native code is specific to each architecture, the verifier's reasoning must stay architecture-independent.
+% 第三，虽然本地代码特定于每个架构，验证器的推理必须保持与架构无关。
 
 We present \tool, an extension interface that lets userspace compilers and kernel modules introduce new operations without modifying the kernel core.
 % 我们提出 \tool，一种扩展接口，让用户空间编译器和内核模块能够引入新操作而无需修改内核核心。
 Our key idea is to give each operation two forms, a \emph{proof sequence} of vanilla eBPF instructions that the existing verifier checks, and a \emph{native emit} of machine instructions that the JIT compiles.
 % 我们的核心思想是给每个操作两种形式：现有验证器检查的原生 eBPF 指令\emph{证明序列}，和 JIT 编译的机器指令\emph{本地发射}。
+Every proof sequence is vanilla eBPF, so the verifier's reasoning stays architecture-independent while only the native emit differs per architecture.
+% 每个证明序列都是原生 eBPF，因此验证器的推理保持与架构无关，只有本地发射随架构不同。
 A compile-time recognizer rewrites programs to use the new operations.
 % 编译时识别器重写程序以使用新操作。
 The verifier re-checks the proof sequence on every load, so the native emit is the only per-operation addition to the TCB.
@@ -138,25 +136,25 @@ Hardware idioms are the lowest-hanging fruit for this interface.
 % 硬件习语是这个接口最容易获取的收益。
 These are operations such as rotate, conditional select, and bit extract that CPUs usually execute as a single native instruction but that the eBPF instruction set expresses only as multi-instruction sequences.
 % 这些操作如旋转、条件选择和位提取，CPU 通常将它们作为单条本地指令执行，但 eBPF 指令集只能将其表达为多指令序列。
-The idioms that the kernel JIT compiles poorly form a small, bounded set, so a handful of operations covers the clearest losses.
-% 内核 JIT 编译效果差的习语构成一个小的有界集合，因此少量操作即可覆盖最明显的损失。
 A 64-bit rotate with a variable shift, a single \texttt{ROL} instruction on x86-64, arrives at the kernel JIT as eight bytecode instructions and is emitted as 15 machine instructions.
 % 64 位可变位移旋转在 x86-64 上是单条 ROL 指令，却以 8 条字节码指令到达内核 JIT，被发射为 15 条机器指令。
+The idioms that the kernel JIT compiles poorly form a small, bounded set, so a handful of operations covers the clearest losses.
+% 内核 JIT 编译效果差的习语构成一个小的有界集合，因此少量操作即可覆盖最明显的损失。
 With \tool, we build \lang, a set of seven such operations.
 % 借助 \tool，我们构建了 \lang，包含七个这样的操作。
 We prove in Lean 4 that, for each operation, the native emit computes the same result as the proof sequence, carrying the verifier's guarantee to the native code.
 % 我们在 Lean 4 中证明，对于每个操作，本地发射与证明序列计算相同的结果，将验证器的保证传递到本地代码。
 
-We implement \tool in the Linux kernel and in userspace tooling, as a small change to the kernel core, a compile-time recognizer, and kernel modules that supply the operations.
-% 我们在 Linux 内核和用户空间工具中实现 \tool，包括对内核核心的小改动、编译时识别器和提供操作的内核模块。
+We implement \tool in the Linux kernel and in userspace tooling, as a small, one-time change to the kernel core, a compile-time recognizer, and kernel modules that supply the operations.
+% 我们在 Linux 内核和用户空间工具中实现 \tool，包括对内核核心的一次性小改动、编译时识别器和提供操作的内核模块。
+A new operation ships as a kernel module, and the existing verifier analysis stays untouched.
+% 新操作作为内核模块发布，现有验证器分析保持不变。
 \lang speeds up eBPF microbenchmarks by 24\% on x86-64 and 22\% on ARM64 in geometric mean over the unmodified pipeline, recovering 42\% of the x86-64 gap to native code, and improves production application throughput by up to 12\%.
 % \lang 使 eBPF 微基准测试的几何平均在 x86-64 上提速 24\%，在 ARM64 上提速 22\%，恢复了 x86-64 上与本地代码差距的 42\%，并使生产应用吞吐量提高达 12\%。
 Native code size shrinks by 12--23\% with no change to the existing verifier analysis (\S\ref{sec:eval}).
 % 本地代码大小缩减 12--23\%，现有验证器分析无需更改。
 The same \tool mechanism also supports whole-program native replacement, reaching 2.358$\times$ on Cilium at the cost of trusting the application's native code (\S\ref{subsec:native_upper_bound}).
 % 同样的 \tool 机制还支持整个程序的本地替换，以信任应用本地代码为代价在 Cilium 上达到 2.358 倍。
-A new operation ships as a kernel module, and the existing verifier analysis stays untouched.
-% 新操作作为内核模块发布，现有验证器分析保持不变。
 
 \noindent\textbf{Contributions.}
 We make the following contributions:
