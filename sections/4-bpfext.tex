@@ -281,7 +281,7 @@ When an operation provides no native emit for the architecture, the extended ins
 Because the interpreter has no dispatch for extended instructions, a kernel without a JIT rejects programs that carry them.
 % 解释器没有扩展指令的分派，因此没有 JIT 的内核会拒绝携带它们的程序。
 
-\subsection{Safety and the Trusted Base}
+\subsection{Safety and the Trusted Computing Base}
 \label{subsec:safety}
 % 安全性与可信基
 
@@ -356,8 +356,8 @@ Each proof sequence stays a small fragment of the program, and the equivalence e
 % 每个证明序列都是程序的一小片段，每个操作所需的等价证据只覆盖该片段。
 Six of the seven idioms appear as fixed bytecode patterns that the recognizer matches in place.
 % 编译器将七个习语中的六个发射为固定的字节码模式，识别器就地匹配。
-Only the prefetch has no eBPF form of any length, so the recognizer inserts it at sites it selects, with a no-op proof sequence.
-% 只有预取没有任何长度的 eBPF 形式，因此识别器在其选择的位置插入它，使用空操作证明序列。
+Only the prefetch has no eBPF equivalent, so the recognizer inserts it at sites it selects, with a no-op proof sequence.
+% 只有预取没有等价的 eBPF 代码，因此识别器在其选择的位置插入它，使用空操作证明序列。
 
 Table~\ref{tab:descriptors} lists the seven operations, each with its proof sequence and its native emit on x86-64 and ARM64.
 % 表列出了七个操作，每个都有其证明序列及其在 x86-64 和 ARM64 上的本地发射。

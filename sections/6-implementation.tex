@@ -150,8 +150,8 @@ Each operation is packaged as one or more kernel modules, separate from the kern
 % 每个操作打包为一个或多个内核模块，与内核核心分开。
 A module supplies an operation's proof-sequence routine and its native emits, and registers both through two existing kernel facilities, BTF, the kernel's type metadata for eBPF objects, and kfuncs, kernel functions that eBPF programs may call.
 % 模块提供操作的证明序列例程及其本地发射，并通过两个现有内核设施注册两者：BTF（内核对 eBPF 对象的类型元数据）和 kfunc（eBPF 程序可以调用的内核函数）。
-The mechanism leaves an operation's size open: a proof sequence may span a few instructions or an entire region within the rules of \S\ref{subsec:safety}.
-% 该机制对操作的大小开放：证明序列可以跨越几条指令，也可以是符合规则的整个区域。
+\tool leaves an operation's size open: a proof sequence may span a few instructions or an entire region within the rules of \S\ref{subsec:safety}.
+% \tool 对操作的大小开放：证明序列可以跨越几条指令，也可以是符合规则的整个区域。
 
 Each module covers one native instruction on one architecture, so an operation that targets a single architecture contributes modules on that architecture only.
 % 每个模块覆盖一个架构上的一条本地指令，因此针对单一架构的操作只在该架构上贡献模块。
