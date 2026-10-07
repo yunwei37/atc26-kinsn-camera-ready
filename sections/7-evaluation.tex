@@ -10,7 +10,7 @@ This section evaluates \lang, the hardware-idiom instantiation of \tool.
 % \lang 在指令集边界以下运行，与不能发射 ISA 缺少的本地习语的字节码优化器互补。
 We use two workload classes.
 % 我们使用两类工作负载。
-First, we reuse the 27 pure-bytecode microbenchmarks from \S\ref{sec:characterization} to isolate instruction-selection effects.
+First, we reuse the 27 microbenchmarks from \S\ref{sec:characterization} to isolate instruction-selection effects.
 % 首先，我们重用来自特征分析的 27 个纯字节码微基准测试来隔离指令选择效果。
 Second, we use production datapath applications to test whether those effects matter in real BPF loading and execution paths.
 % 其次，我们使用生产数据路径应用来测试这些效果在真实 BPF 加载和执行路径中是否重要。
@@ -110,7 +110,7 @@ Taken together, the figure rejects raw site count as the right objective for \la
 \subsection{RQ4: Native-in-Kernel Upper Bound}
 \label{subsec:native_upper_bound}
 
-The three RQs above evaluate \lang as an instantiation of \tool. We now place \tool in a broader design space by using \tool itself to load whole-program native replacements. In this experiment, each Cilium BPF program is compiled from the same C source along two paths: the proof sequence is the normal eBPF bytecode that the verifier checks, while the native emit is the same source compiled with LLVM \texttt{-O2} directly to native code. The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code becomes part of the TCB. The 2.358$\times$ upper bound is not comparable to the characterization's 1.57$\times$ microbenchmark gap, which measures pure-bytecode kernels in isolation rather than Cilium's full datapath.
+The three RQs above evaluate \lang as an instantiation of \tool. We now place \tool in a broader design space by using \tool itself to load whole-program native replacements. In this experiment, each Cilium BPF program is compiled from the same C source along two paths: the proof sequence is the normal eBPF bytecode that the verifier checks, while the native emit is the same source compiled with LLVM \texttt{-O2} directly to native code. The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code becomes part of the TCB. The 2.358$\times$ upper bound is not comparable to the characterization's 1.57$\times$ microbenchmark gap, which measures microbenchmarks in isolation rather than Cilium's full datapath.
 
 We use Cilium for this upper-bound study because it is the same kind of datapath workload evaluated above. The native-in-kernel experiment uses the same x86-64 KVM application setup as the Cilium \lang runs. It is not a claim about Cilium control-plane throughput: it measures steady-state datapath throughput after endpoint setup, with runtime reload and regeneration controllers disabled and the Cilium agent paused during measured workload samples.
 

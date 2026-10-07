@@ -133,7 +133,7 @@ When an operation has no native emit for the architecture, the kernel rewrites t
 
 The recognizer rewrites a program's idioms into extended instructions before load, through two paths.
 % 识别器在加载前通过两条路径将程序的习语重写为扩展指令。
-The first is a selector in the LLVM eBPF backend, which matches idioms during instruction selection and emits the call and sidecar in place of the decomposed bytecode; it adds 2{,}126 lines.
+The first is a selector in the LLVM eBPF backend, which matches idioms during instruction selection and emits the call and sidecar in place of the multi-instruction sequence; it adds 2{,}126 lines.
 % 第一条是 LLVM eBPF 后端中的选择器，它在指令选择时匹配习语，并发射调用和伴随以代替分解后的字节码；它增加了 2126 行。
 The second is a standalone userspace tool of 6{,}967 lines that re-matches idioms on already-compiled bytecode, covering programs the selector never sees or cannot match, such as those compiled by a separate toolchain.
 % 第二条是一个 6967 行的独立用户空间工具，在已编译的字节码上重新匹配习语，覆盖选择器看不到或无法匹配的程序，例如由其他工具链编译的程序。

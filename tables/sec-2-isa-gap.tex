@@ -12,7 +12,7 @@
 Operation & Native instruction & Native & eBPF & Kernel JIT \\
 \midrule
 Rotate & \texttt{ROL}/\texttt{ROR} & 1 & 8 & 15 \\
-Wide load & \texttt{MOV}/\texttt{LDR} & 1 & 22 & 22 \\
+Multi-byte load & \texttt{MOV}/\texttt{LDR} & 1 & 22 & 22 \\
 Conditional select & \texttt{CMP+CMOV}/\texttt{CMP+CSEL} & 2 & 3 & 4 \\
 Byte swap & \texttt{MOVBE}/\texttt{REV} & 1 & 2 & 2 \\
 Bulk copy (64\,B) & \texttt{MOVUPS}/\texttt{LDP+STP} & 4 & 16 & 16 \\

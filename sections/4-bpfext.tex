@@ -315,7 +315,7 @@ Each operation must then supply evidence that its native emit computes the same 
 \label{sec:formal-verification}
 For \lang, we prove this property in Lean 4 for each operation.
 % 对于 \lang，我们在 Lean 4 中为每个操作证明这一性质。
-For register-only operations such as rotate, conditional select, and bit extract, the two forms must agree on the destination register; for memory-touching operations such as byte swap (fused with its load) and bulk copy, they must also agree on the accessed memory and leave all other memory unchanged.
+For register-only operations such as rotate, conditional select, and bit extract, the two forms must agree on the destination register; for operations that access memory, such as the byte swap of a loaded value and bulk copy, they must also agree on the accessed memory and leave all other memory unchanged.
 % 对于仅寄存器操作如旋转、条件选择和位提取，两种形式必须在目标寄存器上一致；对于涉及内存的操作如字节交换（与加载融合）和批量复制，它们还必须在访问的内存上一致，并保持其他内存不变。
 Prefetch is modeled as an architectural no-op; microarchitectural effects such as cache state are outside the model.
 % 预取被建模为架构空操作；缓存状态等微架构效果在模型之外。
@@ -365,7 +365,7 @@ Native emits differ across architectures in shape and in availability.
 % 本地发射在架构间的形状和可用性上有所不同。
 A conditional select compiles to one extended instruction on x86-64, emitting the \texttt{CMP+CMOV} pair, and to two extended instructions on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
 % 条件选择在 x86-64 上编译为一条扩展指令，发射 CMP+CMOV 对，在 ARM64 上编译为两条扩展指令，一条发射 TST，一条发射 CSEL，因此识别器针对程序将要加载的架构进行重写。
-On ARM64, the load-fused byte swap splits the same way, into an \texttt{LDR} and a \texttt{REV}.
+On ARM64, the byte swap of a loaded value splits the same way, into an \texttt{LDR} and a \texttt{REV}.
 % 与加载融合的字节交换在 ARM64 上以相同方式分割，成为 LDR 和 REV。
 One operation, the address computation \texttt{LEA}, exists on x86-64 alone.
 % 一个操作，地址计算 LEA，仅存在于 x86-64。

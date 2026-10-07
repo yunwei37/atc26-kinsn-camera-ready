@@ -108,10 +108,14 @@
 \label{sec:characterization}
 % eBPF 与原生性能差距的特征分析
 
-The same source program runs 1.57$\times$ slower on x86-64, and 1.98$\times$ slower on ARM64, through the eBPF compilation pipeline than under direct native compilation (Figure~\ref{fig:char-pure-percase}).
-% 同样的源程序通过 eBPF 编译管线比直接原生编译慢 1.57 倍（x86-64）和 1.98 倍（ARM64）。
-We characterize the gap on pure-bytecode microbenchmarks, computation kernels that use no helper calls or map accesses, through three questions:
-% 我们通过三个问题在纯字节码微基准测试上特征化这一差距，这些是不使用辅助调用或映射访问的计算内核：
+We characterize the eBPF-native performance gap on microbenchmarks, small programs that only compute and make no helper calls or map accesses.
+% 我们在纯字节码微基准测试上特征化 eBPF 与本地代码之间的性能差距，这些是不使用辅助调用或映射访问的计算内核。
+On them, the same source program runs 1.57$\times$ slower on x86-64, and 1.98$\times$ slower on ARM64, through the eBPF compilation pipeline than under direct native compilation (Figure~\ref{fig:char-pure-percase}).
+% 在这些基准上，同样的源程序通过 eBPF 编译管线比直接原生编译慢 1.57 倍（x86-64）和 1.98 倍（ARM64）。
+The gap is consistent: native code beats the kernel eBPF JIT by more than 2\% on 25 of the 27 benchmarks on x86-64 and on all 27 on ARM64.
+% 这一差距是一致的：本地代码在 x86-64 上 27 个基准中的 25 个、在 ARM64 上全部 27 个比内核 eBPF JIT 快 2\% 以上。
+We break the gap down through three questions:
+% 我们通过三个问题分解这一差距：
 \begin{itemize}
   \item \textbf{C-RQ1.} How much does in-kernel execution slow native code?
   % C-RQ1：内核内执行使原生代码慢多少？
@@ -127,8 +131,8 @@ The first separates the cost of in-kernel execution from the quality of the mach
 % 第一个问题将内核内执行成本与管线生成的机器代码质量分开。
 Within code generation, the second weighs the per-opcode kernel JIT against the bytecode the JIT compiles.
 % 在代码生成内部，第二个问题权衡逐操作码内核 JIT 与 JIT 编译的字节码。
-The third identifies which operations the JIT compiles poorly, so a fix can target the operations.
-% 第三个问题识别 JIT 编译效果差的操作，以便修复可以针对这些操作。
+The third identifies which operations the JIT compiles poorly, so that a fix can target them.
+% 第三个问题识别 JIT 编译效果差的操作，以便修复能够针对它们。
 The section closes with why the kernel cannot host an optimizing compiler (\S\ref{subsec:char-challenges}).
 % 本节以为什么内核不能托管优化编译器结束。
 
@@ -138,15 +142,14 @@ The section closes with why the kernel cannot host an optimizing compiler (\S\re
 
 \noindent\textbf{Benchmarks.}
 % \noindent\textbf{基准测试。}
-The corpus is 27 pure-bytecode microbenchmarks, listed in Table~\ref{tab:microbenchmarks}.
-% 语料库是 27 个纯字节码微基准测试。
-Each is a computation kernel from a real eBPF program in networking, tracing, or security.
-% 每个都是来自网络、追踪或安全领域真实 eBPF 程序的计算内核。
-The examples include a consistent-hash load-balancer lookup from \texttt{katran} and a SipHash-like 64-bit-rotation mixer.
-% 示例包括 katran 的一致性哈希负载均衡器查找和类似 SipHash 的 64 位旋转混合器。
-The kernels use no helper calls or map accesses, so each measurement isolates instruction execution.
-% 这些内核不使用辅助调用或映射访问，因此每次测量隔离指令执行。
-The gap therefore characterizes the bytecode-to-native code-generation quality; in production programs, helper and map time dilutes the instruction-execution share, so case study in \S\ref{sec:eval} measures the end-to-end effect separately.
+We use 27 microbenchmarks, listed in Table~\ref{tab:microbenchmarks}.
+% 我们使用 27 个微基准测试，见表。
+Twelve of them re-implement the core computation of programs in Katran, Cilium, BCC, bpftrace, Tetragon, Tracee, and the OpenTelemetry eBPF profiler; the other fifteen are synthetic programs for packet parsing, hashing, and search.
+% 其中 12 个复现了 Katran、Cilium、BCC、bpftrace、Tetragon、Tracee 和 OpenTelemetry eBPF profiler 中程序的核心计算；其余 15 个是用于包解析、哈希和搜索的合成程序。
+The benchmarks make no helper calls or map accesses, so each measurement isolates instruction execution.
+% 这些基准不调用辅助函数也不访问映射，因此每次测量只反映指令执行。
+The gap therefore reflects only how well the pipeline translates bytecode into machine code.
+In production programs, helper calls and map accesses take a larger share of the time, so the case studies in \S\ref{sec:eval} measure the end-to-end effect separately.
 % 因此差距表征字节码到原生的代码生成质量；在生产程序中，辅助和映射时间稀释指令执行份额，所以案例研究单独测量端到端效果。
 
 \noindent\textbf{Execution paths.}
@@ -167,7 +170,7 @@ In-kernel native against userspace native isolates in-kernel execution.
 % 内核内原生与用户空间原生对比隔离内核内执行。
 The kernel eBPF JIT against userspace LLVM-BPF isolates the per-opcode kernel JIT, given the in-kernel execution bound from C-RQ1.
 % 内核 eBPF JIT 与用户空间 LLVM-BPF 对比隔离逐操作码内核 JIT，给定 C-RQ1 的内核内执行界限。
-Userspace LLVM-BPF against userspace native isolates the bytecode form.
+Userspace LLVM-BPF against userspace native isolates the bytecode itself.
 % 用户空间 LLVM-BPF 与用户空间原生对比隔离字节码形式。
 
 \noindent\textbf{Metric.}
@@ -177,8 +180,6 @@ A path's speedup on a benchmark is the kernel eBPF JIT's median steady-state exe
 Each reported speedup is the geometric mean over the benchmarks.
 % 每个报告的加速比是所有基准测试的几何平均值。
 Load, link, and compile time stay outside the speedup.
-Each of the three paths beats the kernel eBPF JIT by more than 2\% on 24 or 25 of the 27 benchmarks on x86-64 and on all 27 on ARM64.
-% 三条路径各自在 x86-64 上的 27 个基准中有 24 或 25 个、在 ARM64 上全部 27 个比内核 eBPF JIT 快 2\% 以上。
 % 加载、链接和编译时间不计入加速比。
 
 % \input{tables/sec-3-micro-summary}
@@ -222,7 +223,7 @@ Against userspace native at 1.57$\times$ and 1.98$\times$, the optimizing backen
 % 对比用户空间原生的 1.57 倍和 1.98 倍，优化后端恢复了 93\% 和 94\% 的差距。
 Given the in-kernel execution bound from C-RQ1, the recovered share measures the performance the per-opcode kernel JIT loses.
 % 给定 C-RQ1 的内核内执行界限，恢复的份额衡量逐操作码内核 JIT 损失的性能。
-The remaining share of the gap, 7\% on x86-64 and 6\% on ARM64, comes from the bytecode form, which fixes choices such as the register set and calling convention before any compiler runs.
+The remaining share of the gap, 7\% on x86-64 and 6\% on ARM64, comes from the bytecode itself, which fixes choices such as the register set and calling convention before any compiler runs.
 % 剩余的差距份额，x86-64 上 7\%，ARM64 上 6\%，来自字节码形式，它在任何编译器运行前固定了寄存器集和调用约定等选择。
 
 \begin{finding}
@@ -249,21 +250,19 @@ Direct native compilation uses a single rotate instruction, \texttt{ROL} on x86-
 
 \input{figures/sec-3-jit-dump}
 
-A small, bounded set of hardware idioms expands the same way under the kernel JIT.
-% 一组小的有界硬件习语在内核 JIT 下以相同方式展开。
-The rotate is one of a handful of idioms with no single-instruction form.
-% 旋转是少数没有单指令形式的习语之一。
+The rotate is one of a small set of hardware idioms that expand the same way under the kernel JIT.
+% 旋转是一小组硬件习语之一，它们在内核 JIT 下以相同方式展开。
 Table~\ref{tab:isa-gap} lists the idioms, with the instruction counts along each path.
 % 表列出了这些习语，以及每条路径的指令数量。
-Across five idiom-stress probes on x86-64, small programs that each repeat one idiom, the kernel JIT emits 1.25--2.7$\times$ as many instructions as userspace LLVM-BPF for the same programs.
+Across five small test programs on x86-64 that each repeat one idiom, the kernel JIT emits 1.25--2.7$\times$ as many instructions as userspace LLVM-BPF for the same programs.
 % 在 x86-64 上的五个习语压力探测中，每个重复一种习语的小程序，内核 JIT 发射的指令是用户空间 LLVM-BPF 的 1.25--2.7 倍。
-Code size shows the cost across the whole corpus.
-% 代码大小显示了整个语料库的成本。
+Code size shows the cost across all 27 benchmarks.
+% 代码大小显示了全部 27 个基准上的代价。
 In-kernel native machine code is about half the size of the kernel JIT output, 0.54$\times$ on x86-64 and 0.49$\times$ on ARM64, an aggregate that includes losses beyond the idioms.
 % 内核内原生机器代码大约是内核 JIT 输出的一半大小，x86-64 上 0.54 倍，ARM64 上 0.49 倍，这一汇总包括习语之外的损失。
 
 \begin{finding}
-\finlabel A significant share of the per-opcode JIT's loss comes from a small, bounded set of hardware idioms, such as rotate, wide load, and conditional select. The remaining loss comes from cross-instruction optimizations, such as register allocation and instruction scheduling, that are outside the scope of a per-idiom fix.
+\finlabel A significant share of the per-opcode JIT's loss comes from a small set of hardware idioms, such as rotate, multi-byte load, and conditional select. The remaining loss comes from cross-instruction optimizations, such as register allocation and instruction scheduling, that are outside the scope of a per-idiom fix.
 % 发现：逐操作码 JIT 损失的很大一部分来自一组小的有界硬件习语，如旋转、宽加载和条件选择。剩余损失来自跨指令优化，如寄存器分配和指令调度，这超出了逐习语修复的范围。
 \end{finding}
 
@@ -281,8 +280,8 @@ The verifier checks only the bytecode, so the kernel would have to trust the far
 % 验证器只检查字节码，因此内核必须信任生成原生代码的更大编译器。
 Such a compiler would also grow the kernel code that must be maintained and audited for each supported architecture.
 % 这样的编译器还会增加每个支持架构必须维护和审计的内核代码。
-A practical fix instead keeps the simple kernel JIT and targets the idiom share of the loss by letting the JIT emit a bounded set of hardware idioms directly.
-% 实际的修复方案是保持简单的内核 JIT，通过让 JIT 直接发射一组有界的硬件习语来针对损失中的习语份额。
+A practical fix instead keeps the simple kernel JIT and targets the idiom share of the loss by letting the JIT emit hardware idioms directly.
+% 实际的修复方案是保持简单的内核 JIT，通过让 JIT 直接发射硬件习语来针对损失中的习语份额。
 
 Emitting the idioms from the simple kernel JIT must meet three constraints, which the next section addresses.
 % 从简单内核 JIT 发射习语必须满足三个约束，下一节将讨论。
@@ -290,8 +289,8 @@ First, the verifier must still prove every program safe, which keeps eBPF's exis
 % 首先，验证器必须仍能证明每个程序是安全的，这保持 eBPF 现有保证不变。
 Second, adding an operation must not require rewriting the verifier or the JIT core, which keeps the kernel change small and one-time.
 % 其次，添加操作不能要求重写验证器或 JIT 核心，这保持内核更改小且一次性。
-Third, one operation must map to a different native instruction on each architecture, which keeps verification of the operation architecture-independent.
-% 第三，一个操作必须映射到每个架构上不同的本地指令，这保持操作验证的架构无关性。
+Third, one operation may map to a different native instruction on each architecture, while its verification stays architecture-independent.
+% 第三，一个操作可以在每个架构上映射到不同的本地指令，而对它的验证保持与架构无关。
 Within these constraints the fix targets the operations C-RQ3 identifies.
 % 在这些约束下，修复针对 C-RQ3 识别的操作。
 The in-kernel execution cost (C-RQ1) and the bytecode-form residual (C-RQ2) stay out of scope, and \S\ref{sec:eval} measures how much of the JIT's loss the idioms carry.
