@@ -40,12 +40,12 @@ Each operation has two forms, a \emph{proof sequence} of vanilla eBPF instructio
 % 每个操作有两种形式，现有验证器检查的原生 eBPF 指令\emph{证明序列}，和 JIT 编译的机器指令\emph{本地发射}。
 Because the verifier checks the proof sequence, the native emit is the only per-operation addition to the TCB.
 % 由于验证器检查证明序列，本地发射是每个操作对 TCB 的唯一增加。
-Hardware idioms are the lowest-hanging fruit for this interface. With \tool, we build \lang, seven operations such as rotate and conditional select that CPUs execute as single instructions.
-% 硬件习语是这个接口最容易获取的收益。借助 \tool，我们构建了 \lang，包括旋转和条件选择等 CPU 作为单条指令执行的七个操作。
+Hardware idioms are the lowest-hanging fruit for this interface. With \tool, we build \lang, seven operations such as rotate and conditional select that CPUs usually execute as a single instruction.
+% 硬件习语是这个接口最容易获取的收益。借助 \tool，我们构建了 \lang，包括旋转和条件选择等 CPU 通常作为单条指令执行的七个操作。
 Lean 4 proofs show that each native emit computes the same result as its proof sequence.
 % Lean 4 证明表明每个本地发射与其证明序列计算相同的结果。
-On x86-64 and ARM64, \lang speeds up eBPF microbenchmarks by up to 24\% and production applications by up to 12\%.
-% 在 x86-64 和 ARM64 上，\lang 使 eBPF 微基准测试提速达 24\%，生产应用提速达 12\%。
-The same interface also supports whole-program native replacement, reaching 2.358$\times$ at the cost of a larger TCB.
-% 同样的接口还支持整个程序的本地替换，以更大的 TCB 为代价达到 2.358 倍加速。
+On x86-64 and ARM64, \lang speeds up eBPF microbenchmarks by 24\% and 22\% in geometric mean and production applications by up to 12\%.
+% 在 x86-64 和 ARM64 上，\lang 使 eBPF 微基准测试的几何平均提速分别为 24\% 和 22\%，生产应用提速达 12\%。
+The same interface also supports whole-program native replacement, reaching 2.358$\times$ on Cilium at the cost of a larger TCB.
+% 同样的接口还支持整个程序的本地替换，以更大的 TCB 为代价在 Cilium 上达到 2.358 倍加速。
 \end{abstract}

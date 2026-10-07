@@ -133,8 +133,8 @@ CertrBPF~\cite{yuan2022certrbpf} derives a verified C implementation of an eBPF 
 % CertrBPF 从 Coq 规范推导出 eBPF 解释器的经验证 C 实现。
 All of these systems target a fixed instruction set.
 % 所有这些系统都针对固定的指令集。
-Each \lang operation instead includes its own Lean 4 proof that the native emit has the same eBPF-visible effect as its proof sequence (\S\ref{sec:formal-verification}).
-% 每个 \lang 操作则包含其自己的 Lean 4 证明，证明本地发射具有与其证明序列相同的 eBPF 可见效果。
+Each \lang operation instead includes its own Lean 4 proof that the native emit computes the same result as its proof sequence (\S\ref{sec:formal-verification}).
+% 每个 \lang 操作则包含其自己的 Lean 4 证明，证明本地发射与其证明序列计算相同的结果。
 
 Beyond the translators, machine-checked proofs also target eBPF's verification and loading steps.
 % 除了翻译器，机器检查的证明还针对 eBPF 的验证和加载步骤。
