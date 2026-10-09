@@ -185,10 +185,12 @@ Together, the two cases show that the number of rewritten sites is the wrong obj
 % 两个案例共同表明，改写站点的数量不是 \lang 策略的正确目标。
 An operation should be enabled when its rewrites save enough work on the target workload to justify their cost.
 % 只有当一个操作的改写在目标工作负载上节省的工作足以抵消其代价时，才应启用它。
-We currently choose policies by automatically searching over combinations of operations, measuring each combination on the workload, and keeping the best.
-% 目前我们通过自动搜索操作组合来选择策略：在工作负载上测量每个组合，保留最好的一个。
-Such a search must be repeated for every workload and processor, and its cost grows with the number of combinations, because the number of rewritten sites alone cannot predict how often each site runs or how rewrites interact.
-% 这种搜索必须对每个工作负载和处理器重复进行，其代价随组合数量增长，因为仅凭改写站点的数量无法预测每个站点执行得多频繁，也无法预测多个改写之间如何相互影响。
+We currently choose policies by an automatic search that enables each combination of operations, measures it on the workload, and keeps the best.
+% 目前我们用自动搜索选择策略：启用每一种操作组合，在工作负载上测量，保留最好的一个。
+The search is needed because the number of rewritten sites cannot predict how often each site runs or how rewrites interact.
+% 之所以需要搜索，是因为改写站点的数量无法预测每个站点执行得多频繁，也无法预测多个改写之间如何相互影响。
+Its cost, however, grows with the number of combinations, and it must be repeated for every workload and processor.
+% 但搜索的代价随组合数量增长，而且必须对每个工作负载和处理器重复进行。
 A cost model that combines program profiles with processor information could replace most of these measurements, which we leave to future work.
 % 结合程序剖析和处理器信息的代价模型可以取代大部分这类测量，我们将其留作未来工作。
 

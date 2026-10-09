@@ -137,8 +137,8 @@ The first is a selector in the LLVM eBPF backend, which matches idioms during in
 % 第一条是 LLVM eBPF 后端中的选择器，它在指令选择时匹配习语，并发射调用和伴随以代替分解后的字节码；它增加了 2126 行。
 The second is a standalone userspace tool of 6{,}967 lines that re-matches idioms on already-compiled bytecode, covering programs the selector never sees or cannot match, such as those compiled by a separate toolchain.
 % 第二条是一个 6967 行的独立用户空间工具，在已编译的字节码上重新匹配习语，覆盖选择器看不到或无法匹配的程序，例如由其他工具链编译的程序。
-It checks that each rewrite preserves the program's semantics, for example that a temporary register the idiom overwrites is dead afterward.
-% 它检查每次重写保持程序语义，例如习语覆盖的临时寄存器之后不再被使用。
+It checks that each rewrite preserves the program's semantics; whether a temporary register is read afterward is checked by the kernel (\S\ref{subsec:safety}).
+% 它检查每次重写保持程序语义；临时寄存器之后是否被读取由内核检查。
 A program built without the recognizer, or one whose idioms the recognizer does not match, produces the same vanilla eBPF bytecode and runs through the unchanged pipeline.
 % 不用识别器构建的程序，或识别器未匹配其习语的程序，产生相同的原生 eBPF 字节码，并通过未修改的管线运行。
 

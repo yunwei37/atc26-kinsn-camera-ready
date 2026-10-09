@@ -304,6 +304,8 @@ For the collapse to preserve the verdict, control must enter a region only at it
 % 为使折叠保持裁决，控制只能从区域顶部进入、只能从末尾之后离开，像单条指令一样。
 At load time, the kernel validates that each region has a single entry and a single exit and contains no nested extended instructions, calls, or exits; regions must also contain no backward jumps.
 % 内核在加载时验证每个区域单入口单出口，且不含嵌套扩展指令、调用或退出；区域还必须不含向后跳转。
+Using the verifier's liveness information, the kernel also checks that no instruction after a region reads a temporary register that the proof sequence overwrites, so the two forms agree on every register the program can read afterwards.
+% 内核还利用验证器的活性信息，检查区域之后没有指令读取证明序列覆盖的临时寄存器，从而两种形式在程序之后可读的每个寄存器上都一致。
 
 What remains trusted is the existing eBPF verifier and JIT, together with \tool's one-time kernel patch to them, which validates proof regions, lowers extended instructions before verification, restores them after verification, and dispatches their native emits (\S\ref{sec:implementation}).
 % 因此可信路径包括现有的 eBPF 验证器和 JIT，以及 \tool 对它们的一次性内核补丁，它验证证明区域、在验证前降低扩展指令、在验证后恢复它们、并分派它们的本地发射。
@@ -335,8 +337,10 @@ Because both results equal the specification, the destination registers agree, a
 Each \lang operation is proved the same way.
 % 每个 \lang 操作都以同样的方式证明。
 
-Trust in the proofs therefore rests on the instruction models, Lean itself, and each emit function's encoding of the modeled instructions; the specification need not be trusted, since the lemmas give equality whatever it says.
-% 因此需要信任的是指令模型、Lean 本身，以及每个发射函数对所建模指令的编码；规范无需信任，因为无论规范是什么，引理都给出相等。
+Trust in the proofs therefore rests on the instruction models and Lean itself; the specification need not be trusted, since the lemmas give equality whatever it says.
+% 因此需要信任的是指令模型和 Lean 本身；规范无需信任，因为无论规范是什么，引理都给出相等。
+We also check that the machine code each emit function writes matches the modeled instructions.
+% 我们还检查了每个发射函数写出的机器码与所建模的指令一致。
 Neither instruction set is translated into the other; both are modeled in one Lean development and meet only in the specification.
 % 两套指令集之间没有相互翻译：两者在同一个 Lean 开发中建模，只在规范处相遇。
 Supporting a new architecture needs a model of its native instructions and proofs that its native emits compute the existing specifications; the lemmas for existing proof sequences carry over unchanged.
