@@ -280,6 +280,7 @@ A new operation therefore needs only a pattern in the recognizer and one or more
 
 \subsection{\lang: Hardware-Idiom Operations}
 \label{sec:lang}
+% \note{[zhengjie, Overleaf] on the subsection title: Extended eBPF Bytecode?}
 % \lang：硬件习语操作
 
 \lang is a first set of seven operations built on \tool, one for each hardware idiom that the eBPF instruction set has no single-instruction form for, such as rotate and conditional select.
@@ -327,6 +328,7 @@ Consequently, the userspace recognizer lies outside the TCB. A wrong rewrite is 
 The verifier checks the program with proof sequences, but the JIT compiles the program with the operations, so what the verifier proves about the first must also hold for the second.
 % 验证器检查的是含证明序列的程序，而 JIT 编译的是含操作的程序，因此验证器对前者证明的性质必须对后者同样成立。
 When the operations are restored, each proof sequence in the program is replaced by its operation again, and nothing else changes.
+% \note{[zhengjie, Overleaf] on "proof region": isn't this just kinsns? -- the term proof region is now removed}
 % 恢复阶段将每个\emph{证明序列}重新被其操作替换，其他不变。
 For this to hold, control must enter a proof sequence only at its top and leave only past its end, like a single instruction.
 % 要做到这一点，控制流只能从证明序列顶部进入、只能从证明序列末尾之后离开，就像单条指令一样。
