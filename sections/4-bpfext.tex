@@ -185,7 +185,7 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \node[font=\sffamily\fontsize{8}{9}\selectfont,anchor=west,inner sep=0pt] at (.82,6.90) {Original eBPF};
 \node[font=\sffamily\fontsize{8}{9}\selectfont,anchor=west,inner sep=0pt] at (.82,6.35) {BPF-Ext};
 \begin{scope}[yshift=0cm]
-\foreach \x/\n/\stage/\representation in {0/1/Input/eBPF bytecode,3.59/2/Rewritten/eBPF + ext.\ insns,7.18/3/Checked/eBPF bytecode,10.77/4/Restored/eBPF + ext.\ insns,14.36/5/x86-64/Native code} {
+\foreach \x/\n/\stage/\representation in {0/1/Input/eBPF bytecode,3.59/2/Rewritten/eBPF + operations,7.18/3/Checked/eBPF bytecode,10.77/4/Restored/eBPF + operations,14.36/5/x86-64/Native code} {
 \draw[draw=black!40,fill=white,line width=.55pt] (\x,.05) rectangle (\x+3.14,4.75);
 \node[productnumber] at (\x+.40,4.33) {\n};
 \node[panelheading] at (\x+.77,4.33) {\textbf{\stage}\\\representation};
@@ -231,8 +231,8 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \end{scope}
 \end{tikzpicture}
 \endgroup
-\caption{Original eBPF and BPF-Ext compilation paths for a 64-bit left rotation by 16. Circled numbers link the BPF-Ext path to the code panels. Module callbacks use dotted arrows for calls and thin solid arrows for returned instruction sequences. The labeled box marks one extended instruction for the \lang rotate, which occupies two eBPF slots, an operand sidecar followed by a call (\S\ref{subsec:kernel}). The proof sequence adds a store and a load to preserve the temporary register \texttt{r6}. \texttt{fp} denotes the eBPF frame pointer, and gray code provides context.}
-\Description{Orange long-dashed arrows show the original eBPF compilation path, and dark blue solid arrows show the BPF-Ext path. Both pass through the same Clang, eBPF verifier, and kernel JIT components. Circled program representations one through five lie on the solid path and match the code panels below. Representation one enters the compile-time recognizer, which returns rewritten representation two. The kernel replaces extended instructions with proof sequences to obtain representation three, verifies it, restores the extended instructions to obtain representation four, and generates native representation five. The dashed path bypasses these additional steps and produces separate native code. The proof sequence and native code are adjacent within the kernel modules box. The JIT obtains the native code through an orthogonal connection.}
+\caption{Original eBPF and BPF-Ext compilation paths for a 64-bit left rotation by 16. Circled numbers link the BPF-Ext path to the code panels. Module callbacks use dotted arrows for calls and thin solid arrows for returned instruction sequences. The labeled box marks one use of the \lang rotate operation, which occupies two eBPF slots, an operand sidecar followed by a call (\S\ref{subsec:kernel}). The proof sequence adds a store and a load to preserve the temporary register \texttt{r6}. \texttt{fp} denotes the eBPF frame pointer, and gray code provides context.}
+\Description{Orange long-dashed arrows show the original eBPF compilation path, and dark blue solid arrows show the BPF-Ext path. Both pass through the same Clang, eBPF verifier, and kernel JIT components. Circled program representations one through five lie on the solid path and match the code panels below. Representation one enters the compile-time recognizer, which returns rewritten representation two. The kernel replaces operations with proof sequences to obtain representation three, verifies it, restores the operations to obtain representation four, and generates native representation five. The dashed path bypasses these additional steps and produces separate native code. The proof sequence and native code are adjacent within the kernel modules box. The JIT obtains the native code through an orthogonal connection.}
 \label{fig:pipeline}
 \end{figure*}
 
@@ -244,38 +244,37 @@ An operation in \tool packages one computation in two forms with the same semant
 % \tool 中的一个操作把一项计算打包成两种语义相同的形式：由验证器检查的原生 eBPF \emph{证明序列}，以及由 CPU 运行的、每个架构上的本地代码。
 Giving the verifier a vanilla eBPF form, rather than new semantics for each operation, lets its existing analysis check every operation, and giving the CPU native code lets it run the computation directly.
 % 给验证器一个原生 eBPF 形式，而不是为每个操作添加新语义，使验证器现有的分析能检查每个操作；给 CPU 本地代码，使它能直接执行这项计算。
-A program refers to an operation through an \emph{extended instruction} that names the operation and carries its operands.
-% 程序通过\emph{扩展指令}引用操作，扩展指令指明操作并携带其操作数。
-Extended instructions are encoded with existing eBPF opcodes (\S\ref{subsec:kernel}), so \tool adds no new opcode.
-% 扩展指令用现有的 eBPF 操作码编码，因此 \tool 不添加新操作码。
+% 程序通过\emph{操作}引用操作，操作指明操作并携带其操作数。
+A program uses an operation in place of the code it replaces, naming the operation and its operands in existing eBPF opcodes (\S\ref{subsec:kernel}), so \tool adds no new opcode.
+% 操作用现有的 eBPF 操作码编码，因此 \tool 不添加新操作码。
 
-The pipeline handles an extended instruction in three stages, each using the form it needs: recognition in userspace, verification in the kernel, and code generation by the JIT.
-% 管线分三个阶段处理扩展指令，每个阶段使用它需要的那种形式：用户空间中的识别、内核中的验证，以及 JIT 的代码生成。
-In userspace, before the program loads, the recognizer matches the patterns of supported operations (\S\ref{subsec:llvm}) and rewrites each match into one or more extended instructions.
-% 在用户空间，程序加载之前，识别器匹配所支持操作的模式（\S\ref{subsec:llvm}），并把每处匹配改写为一条或多条扩展指令。
-In Figure~\ref{fig:pipeline}, it rewrites the shifts and bitwise OR of a 64-bit left rotate by 16 (\ding{172}) into an extended instruction whose operands name \texttt{r7} as source and destination and 16 as the rotate amount (\ding{173}).
-% 在图中，它把 64 位左旋 16 位的移位和按位或（①）改写为一条扩展指令，其操作数指定 r7 为源和目的、16 为旋转量（②）。
+The pipeline handles each operation in a program in three stages, each using the form it needs: recognition in userspace, verification in the kernel, and code generation by the JIT.
+% 管线分三个阶段处理操作，每个阶段使用它需要的那种形式：用户空间中的识别、内核中的验证，以及 JIT 的代码生成。
+In userspace, before the program loads, the recognizer matches the patterns of supported operations (\S\ref{subsec:llvm}) and rewrites each match into one or more operations.
+% 在用户空间，程序加载之前，识别器匹配所支持操作的模式（\S\ref{subsec:llvm}），并把每处匹配改写为一条或多条操作。
+In Figure~\ref{fig:pipeline}, it rewrites the shifts and bitwise OR of a 64-bit left rotate by 16 (\ding{172}) into a \lang rotate whose operands name \texttt{r7} as source and destination and 16 as the rotate amount (\ding{173}).
+% 在图中，它把 64 位左旋 16 位的移位和按位或（①）改写为一条操作，其操作数指定 r7 为源和目的、16 为旋转量（②）。
 
-In the kernel, each extended instruction is first replaced with its proof sequence, so the verifier's existing analysis sees only vanilla eBPF (\ding{174}).
-% 在内核中，每条扩展指令先被替换为它的证明序列，使验证器现有的分析只看到原生 eBPF（③）。
-Once the analysis accepts the program, the kernel restores the extended instructions for the JIT (\ding{175}).
-% 分析接受程序后，内核为 JIT 恢复扩展指令（④）。
-It restores them right after the analysis, so the steps that follow verification and prepare the program for the JIT handle each extended instruction as an ordinary instruction in existing opcodes.
-% 内核在分析结束后立即恢复它们，这样验证之后、为 JIT 准备程序的那些步骤会把每条扩展指令当作使用现有操作码的普通指令处理。
-Proof sequences can differ across architectures when an operation compiles to a different number of extended instructions on each (\S\ref{sec:lang}), but because every variant is vanilla eBPF checked by the same analysis, verification stays architecture-independent.
-% 当一个操作在不同架构上编译为不同数量的扩展指令时，证明序列也会不同，但由于每种变体都是由同一分析检查的原生 eBPF，验证保持与架构无关。
+In the kernel, each operation in the program is first replaced with its proof sequence, so the verifier's existing analysis sees only vanilla eBPF (\ding{174}).
+% 在内核中，每条操作先被替换为它的证明序列，使验证器现有的分析只看到原生 eBPF（③）。
+Once the analysis accepts the program, the kernel restores the operations for the JIT (\ding{175}).
+% 分析接受程序后，内核为 JIT 恢复操作（④）。
+It restores them right after the analysis, so the steps that follow verification and prepare the program for the JIT handle each operation as an ordinary instruction in existing opcodes.
+% 内核在分析结束后立即恢复它们，这样验证之后、为 JIT 准备程序的那些步骤会把每条操作当作使用现有操作码的普通指令处理。
+Proof sequences can differ across architectures when an operation splits differently on each (\S\ref{sec:lang}), but because every variant is vanilla eBPF checked by the same analysis, verification stays architecture-independent.
+% 当一个操作在不同架构上编译为不同数量的操作时，证明序列也会不同，但由于每种变体都是由同一分析检查的原生 eBPF，验证保持与架构无关。
 
-During code generation, the JIT replaces each extended instruction with the operation's native code for the running architecture.
-% 在代码生成时，JIT 用当前架构上该操作的本地代码替换每条扩展指令。
-For the rotate, it emits a single \texttt{ROL} on x86-64, here \texttt{rol r13, 16} with \texttt{r13} holding eBPF register \texttt{r7} (\ding{176}), or a single \texttt{ROR} on ARM64.
+During code generation, the JIT replaces each operation with its native code for the running architecture.
+% 在代码生成时，JIT 用当前架构上该操作的本地代码替换每条操作。
+For the \lang rotate, it emits a single \texttt{ROL} on x86-64, here \texttt{rol r13, 16} with \texttt{r13} holding eBPF register \texttt{r7} (\ding{176}), or a single \texttt{ROR} on ARM64.
 % 对于旋转，它在 x86-64 上发射一条 ROL，这里是 rol r13, 16，r13 存放 eBPF 寄存器 r7（⑤）；在 ARM64 上发射一条 ROR。
 The same program thus verifies as vanilla eBPF and runs as native code.
 % 于是同一程序作为原生 eBPF 验证，作为本地代码运行。
-When an operation has no native code for the architecture, the extended instruction falls back to its proof sequence, which the JIT compiles as vanilla eBPF. Because the interpreter cannot run native code, a kernel without a JIT rejects programs that carry extended instructions.
-% 当操作在该架构上没有本地代码时，扩展指令回退到其证明序列，由 JIT 作为原生 eBPF 编译。由于解释器无法运行本地代码，没有 JIT 的内核会拒绝含扩展指令的程序。
+When an operation has no native code for the architecture, it falls back to its proof sequence, which the JIT compiles as vanilla eBPF. Because the interpreter cannot run native code, a kernel without a JIT rejects programs that use operations.
+% 当操作在该架构上没有本地代码时，操作回退到其证明序列，由 JIT 作为原生 eBPF 编译。由于解释器无法运行本地代码，没有 JIT 的内核会拒绝含操作的程序。
 
-No stage depends on a particular operation: the kernel patch replaces, restores, and emits every extended instruction through one generic path (\S\ref{subsec:kernel}), and it changes neither the verifier's analysis nor how the JIT translates ordinary instructions.
-% 没有哪个阶段依赖于特定操作：内核补丁通过一条通用路径对所有扩展指令进行替换、恢复和发射，并且既不改变验证器的分析，也不改变 JIT 对普通指令的翻译。
+No stage depends on a particular operation: the kernel patch replaces, restores, and emits every operation through one generic path (\S\ref{subsec:kernel}), and it changes neither the verifier's analysis nor how the JIT translates ordinary instructions.
+% 没有哪个阶段依赖于特定操作：内核补丁通过一条通用路径对所有操作进行替换、恢复和发射，并且既不改变验证器的分析，也不改变 JIT 对普通指令的翻译。
 A new operation therefore needs only a pattern in the recognizer and one or more kernel modules that supply its proof sequence and native code.
 % 因此新操作只需要识别器中的一个模式，以及一个或多个提供其证明序列和本地代码的内核模块。
 
@@ -301,11 +300,11 @@ Only the prefetch has no eBPF equivalent, so the recognizer inserts it at sites 
 
 Native code differs across architectures in shape and in availability.
 % 本地代码在不同架构上的形状和可用性有所不同。
-A conditional select compiles to one extended instruction on x86-64, emitting the \texttt{CMP+CMOV} pair, and to two extended instructions on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
-% 条件选择在 x86-64 上编译为一条扩展指令，发射 CMP+CMOV 对，在 ARM64 上编译为两条扩展指令，一条发射 TST，一条发射 CSEL，因此识别器针对程序将要加载的架构进行重写。
+A conditional select is one \lang operation on x86-64, emitting the \texttt{CMP+CMOV} pair, and splits into two \lang operations on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
+% 条件选择在 x86-64 上编译为一条操作，发射 CMP+CMOV 对，在 ARM64 上编译为两条操作，一条发射 TST，一条发射 CSEL，因此识别器针对程序将要加载的架构进行重写。
 On ARM64, the byte swap of a loaded value splits the same way, into an \texttt{LDR} and a \texttt{REV}.
 % 在 ARM64 上，对加载值的字节交换以相同方式拆分为 LDR 和 REV。
-One operation, the address computation \texttt{LEA}, exists on x86-64 alone.
+One \lang operation, the address computation \texttt{LEA}, exists on x86-64 alone.
 % 一个操作，地址计算 LEA，仅存在于 x86-64。
 
 \input{tables/sec-3-descriptors}
@@ -318,35 +317,35 @@ We assume that programs and the recognizer may be buggy or malicious, while the 
 % 我们假设程序和识别器可能有错甚至恶意，而 \tool 新增的内核代码（补丁和操作模块）与其他内核代码一样，必须没有普通的程序错误。
 Under this assumption, safety rests on two arguments: the verifier checks everything \tool adds except an operation's native code, and that native code is proved to compute the same result as its proof sequence.
 % 在这一假设下，安全性建立在两个论证之上：验证器检查 \tool 添加的除本地代码外的一切，而本地代码被证明与其证明序列计算相同的结果。
-Everything the recognizer and the kernel modules contribute reaches the verifier inside the program it checks, which the verifier re-checks on every load with the same analysis as for vanilla eBPF.
+For the first argument, everything the recognizer and the kernel modules contribute reaches the verifier inside the program it checks, which the verifier re-checks on every load with the same analysis as for vanilla eBPF.
 % 识别器和模块贡献的一切都在替换后的程序内到达验证器，验证器每次加载时都用与原生 eBPF 相同的分析重新检查它。
 A faulty rewrite or proof sequence that violates safety therefore fails verification like any unsafe program.
 % 因此违反安全的错误重写或证明序列会像任何不安全程序一样验证失败。
 Consequently, the userspace recognizer lies outside the TCB. A wrong rewrite is either rejected or yields a safe program that computes a different result.
 % 因此用户空间识别器在安全边界之外：错误的重写要么被拒绝，要么得到一个计算结果不同但安全的程序。
 
-The verifier checks the program with proof sequences, but the JIT compiles the program with extended instructions, so what the verifier proves about the first must also hold for the second.
-% 验证器检查的是含证明序列的程序，而 JIT 编译的是含扩展指令的程序，因此验证器对前者证明的性质必须对后者同样成立。
-When the extended instructions are restored, each \emph{proof region} \note{isn't this just kinsns}, the span its proof sequence occupies, is replaced by its extended instruction again, and nothing else changes.
-% 恢复阶段将每个\emph{证明区域}（其证明序列占据的范围）重新被其扩展指令替换，其他不变。
-For this to hold, control must enter a region only at its top and leave only past its end, like a single instruction.
-% 要做到这一点，控制流只能从区域顶部进入、只能从区域末尾之后离开，就像单条指令一样。
-At load time, the kernel validates that each region has a single entry and a single exit and contains no nested extended instructions, calls, exits, or backward jumps.
-% 内核在加载时验证每个区域单入口单出口，且不含嵌套扩展指令、调用或退出；区域还必须不含向后跳转。
-Using the verifier's liveness information, the kernel also checks that no instruction after a region reads a temporary register that the proof sequence overwrites, so the two forms agree on every register the program can read afterwards.
-% 内核还利用验证器的活性信息，检查区域之后没有指令读取证明序列覆盖的临时寄存器，从而两种形式在程序之后可读的每个寄存器上都一致。
+The verifier checks the program with proof sequences, but the JIT compiles the program with the operations, so what the verifier proves about the first must also hold for the second.
+% 验证器检查的是含证明序列的程序，而 JIT 编译的是含操作的程序，因此验证器对前者证明的性质必须对后者同样成立。
+When the operations are restored, each proof sequence in the program is replaced by its operation again, and nothing else changes.
+% 恢复阶段将每个\emph{证明序列}重新被其操作替换，其他不变。
+For this to hold, control must enter a proof sequence only at its top and leave only past its end, like a single instruction.
+% 要做到这一点，控制流只能从证明序列顶部进入、只能从证明序列末尾之后离开，就像单条指令一样。
+At load time, the kernel validates that each proof sequence has a single entry and a single exit and contains no nested operations, calls, exits, or backward jumps.
+% 内核在加载时验证每个证明序列单入口单出口，且不含嵌套操作、调用或退出；证明序列还必须不含向后跳转。
+Using the verifier's liveness information, the kernel also checks that no instruction after a proof sequence reads a temporary register that the proof sequence overwrites, so the two forms agree on every register the program can read afterwards.
+% 内核还利用验证器的活性信息，检查证明序列之后没有指令读取证明序列覆盖的临时寄存器，从而两种形式在程序之后可读的每个寄存器上都一致。
 
-What remains trusted is the existing eBPF verifier and JIT, together with \tool's one-time kernel patch to them, which validates proof regions, replaces extended instructions with their proof sequences before verification, restores them afterward, and emits their native code (\S\ref{sec:implementation}).
-% 因此可信路径包括现有的 eBPF 验证器和 JIT，以及 \tool 对它们的一次性内核补丁，它验证证明区域、在验证前替换扩展指令、在验证后恢复它们、并调用它们的本地代码。
+What remains trusted is the existing eBPF verifier and JIT, together with \tool's one-time kernel patch to them, which validates proof sequences, replaces operations with their proof sequences before verification, restores them afterward, and emits their native code (\S\ref{sec:implementation}).
+% 因此可信路径包括现有的 eBPF 验证器和 JIT，以及 \tool 对它们的一次性内核补丁，它验证证明序列、在验证前替换操作、在验证后恢复它们、并调用它们的本地代码。
 Beyond these one-time components, only an operation's native code escapes any check at load time.
 % 除了这些一次性组件，只有操作的本地代码在加载时不受任何检查。
 Each operation must therefore supply evidence that its native code computes the same result as its proof sequence on every register and memory location the program can read afterwards.
 % 因此每个操作必须提供证据，证明其本地代码在程序之后可读的每个寄存器和内存位置上与其证明序列计算相同的结果。
 
 \label{sec:formal-verification}
-For \lang, we prove this property in Lean 4 for each operation.
-% 对于 \lang，我们在 Lean 4 中为每个操作证明这一性质。
-For register-only operations such as rotate, conditional select, and bit extract, the two forms must agree on the destination register. For operations that access memory, such as the byte swap of a loaded value and bulk copy, they must also agree on the accessed memory and leave all other memory unchanged.
+For the second argument, we prove this property in Lean 4 for each \lang operation.
+% 就第二点而言，我们在 Lean 4 中为每个 \lang 操作证明这一性质。
+For register-only \lang operations such as rotate, conditional select, and bit extract, the two forms must agree on the destination register. For \lang operations that access memory, such as the byte swap of a loaded value and bulk copy, they must also agree on the accessed memory and leave all other memory unchanged.
 % 对于仅寄存器操作如旋转、条件选择和位提取，两种形式必须在目标寄存器上一致；对于涉及内存的操作如字节交换（与加载融合）和批量复制，它们还必须在访问的内存上一致，并保持其他内存不变。
 Prefetch is modeled as an architectural no-op, and microarchitectural effects such as cache state are outside the model.
 % 预取被建模为架构空操作；缓存状态等微架构效果在模型之外。
@@ -357,7 +356,7 @@ We assume a proof sequence the verifier accepts and an initial state the verifie
 
 The two forms meet in a hardware-independent specification of each operation.
 % 两种形式在每个操作的硬件无关规范处相遇。
-For rotate, the specification is $\operatorname{rotl}_{64}(x,n)=(x\ll n)\lor(x\gg(64-n))$ for $1\leq n<64$, over 64-bit bit-vectors with a logical right shift.
+For the \lang rotate, the specification is $\operatorname{rotl}_{64}(x,n)=(x\ll n)\lor(x\gg(64-n))$ for $1\leq n<64$, over 64-bit bit-vectors with a logical right shift.
 % 对于旋转，规范是 64 位位向量上的 rotl64(x,n)=(x<<n)|(x>>(64-n))，1<=n<64，右移为逻辑右移。
 One lemma shows that the proof sequence of shifts and bitwise OR leaves $\operatorname{rotl}_{64}(x,n)$ in its destination register, and a second lemma, one per architecture, shows the same for the native \texttt{ROL} on x86-64 and \texttt{ROR} (encoded as \texttt{EXTR}) on ARM64.
 % 一条引理表明移位与按位或构成的证明序列在其目标寄存器中留下 rotl64(x,n)，另一条引理（每个架构一条）对 x86-64 上的 ROL 和 ARM64 上的 ROR（编码为 EXTR）给出同样的结论。
@@ -379,7 +378,7 @@ The proofs extend to new architectures and operations with little new work.
 % 这些证明可以以很少的额外工作扩展到新架构和新操作。
 Supporting a new architecture needs a model of its native instructions and proofs that its native code computes the existing specifications. The lemmas for existing proof sequences carry over unchanged.
 % 支持新架构需要其本地指令的模型，以及证明其本地代码计算现有规范；已有证明序列的引理保持不变地复用。
-The instruction models and register-preservation lemmas are shared across operations, so a new operation on an existing architecture needs only its specification and its two lemmas.
+The instruction models and register-preservation lemmas are shared across \lang operations, so a new operation on an existing architecture needs only its specification and its two lemmas.
 % 指令模型和寄存器保持引理在各操作之间共享，因此在已有架构上新增一个操作只需要它的规范和两个引理。
-Because each operation replaces only a small fragment of a program, its proof stays small.
+Because each \lang operation replaces only a small fragment of a program, its proof stays small.
 % 由于每个操作只替换程序中的一小片段，它的证明也很小。
