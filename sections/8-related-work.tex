@@ -92,8 +92,8 @@ eBPF for Windows~\cite{windows-ebpf}, using the PREVAIL verifier~\cite{gershuni2
 % eBPF for Windows（使用 PREVAIL 验证器）和 Craun 等人在内核之外验证程序，并以签名代码的形式加载。
 KFlex~\cite{dwivedi2024fast} enforces memory safety and termination with runtime checks, Rex~\cite{jia2025rex} replaces the verifier with safe Rust, and MOAT~\cite{lu2024moat} and SafeBPF~\cite{soo2024safebpf} add runtime isolation on top of the verifier's static checks.
 % KFlex 用运行时检查保证内存安全和终止性，Rex 用安全 Rust 取代验证器，MOAT 和 SafeBPF 在验证器的静态检查之上增加运行时隔离。
-With \tool, programs are still checked by the existing in-kernel verifier, and beyond \tool's kernel patch, the only per-operation addition to the TCB is the native emit (\S\ref{subsec:safety}).
-% 使用 \tool 时，程序仍由现有的内核验证器检查；除了 \tool 的内核补丁外，每个操作对 TCB 的唯一增加是本地发射。
+With \tool, programs are still checked by the existing in-kernel verifier, and beyond \tool's kernel patch, the only code each operation adds to the TCB is the native emit (\S\ref{subsec:safety}).
+% 使用 \tool 时，程序仍由现有的内核验证器检查；除了 \tool 的内核补丁外，每个操作加入 TCB 的唯一代码是本地发射。
 CompCert~\cite{leroy2009formal} verifies a C compiler and Alive2~\cite{lopes2021alive2} validates LLVM optimizations, while Jitk~\cite{wang2014jitk}, Jitterbug~\cite{nelson2020specification}, JitSynth~\cite{vangeffen2020jitsynth}, and CertrBPF~\cite{yuan2022certrbpf} verify BPF JITs and interpreters.
 % CompCert 验证一个 C 编译器，Alive2 验证 LLVM 优化，而 Jitk、Jitterbug、JitSynth 和 CertrBPF 验证 BPF 的 JIT 和解释器。
 All of them target a fixed instruction set, whereas each \lang operation carries its own Lean 4 proof that its native emit matches its proof sequence (\S\ref{sec:formal-verification}).
