@@ -98,8 +98,8 @@ These cases indicate that \lang is not uniformly beneficial and that operations 
 
 \noindent\textbf{Load-time overhead.}
 % \noindent\textbf{加载时开销。}
-The lowering and restore stages add two linear passes over the program during verification.
-% 降级和恢复阶段在验证期间给程序增加两遍线性扫描。
+Replacing extended instructions before verification and restoring them afterward adds two linear passes over the program.
+% 在验证前替换扩展指令、验证后恢复，给程序增加两遍线性扫描。
 Across all 62 microbenchmarks on x86-64, the kernel's load time, which covers verification and JIT compilation, is 0.99$\times$ that of the original kernel in geometric mean, so the overhead is not measurable.
 % 在 x86-64 上的全部 62 个微基准中，内核加载时间（包括验证和 JIT 编译）的几何平均是原版内核的 0.99 倍，开销无法测出。
 For programs with \lang sites, the end-to-end compile time, including the userspace recognizer, increases by 1.4--2.4$\times$ but stays below a millisecond.

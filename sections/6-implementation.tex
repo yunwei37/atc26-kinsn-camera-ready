@@ -118,12 +118,12 @@ The call identifies the operation, and the sidecar carries a packed 52-bit paylo
 
 % \input{tables/sec-5-encoding}
 
-The verifier gains a lowering stage and a restore stage around its existing analysis.
-% 验证器在其现有分析周围获得降低阶段和恢复阶段。
-The lowering stage replaces each extended instruction with the proof sequence from its module and records the original pair; the restore stage reinstates the pairs after verification succeeds.
-% 降低阶段用其模块提供的证明序列替换每条扩展指令并记录原始指令对；验证成功后，恢复阶段恢复这些指令对。
-The x86-64 and ARM64 JIT backends each gain a dispatch case that decodes the sidecar payload and calls the operation's native emit for the running architecture.
-% x86-64 和 ARM64 JIT 后端各增加一个分派情况，解码伴随载荷并调用该操作对应运行架构的本地发射。
+The verifier gains two steps around its existing analysis.
+% 验证器在其现有分析周围获得替换步骤和恢复步骤。
+Before the analysis, it replaces each extended instruction with the proof sequence from its module and records the original pair; after the analysis succeeds, it restores the pairs.
+% 替换步骤用其模块提供的证明序列替换每条扩展指令并记录原始指令对；验证成功后，恢复步骤恢复这些指令对。
+The x86-64 and ARM64 JIT backends each gain a case that decodes the sidecar payload and calls the operation's native emit for the running architecture.
+% x86-64 和 ARM64 JIT 后端各增加一个处理情况，解码伴随载荷并调用该操作对应运行架构的本地发射。
 When an operation has no native emit for the architecture, the kernel rewrites the site back to its proof sequence before the JIT runs.
 % 当操作没有该架构的本地发射时，内核在 JIT 运行前将该处重写回其证明序列。
 
@@ -161,8 +161,8 @@ Of these lines, only the native emits affect the verifier's guarantee.
 % 这些代码中，只有本地发射影响验证器的保证。
 A native emit is a function of a few dozen lines that writes one or two machine instructions, and it is the only code in an operation whose output the verifier does not see; the proof-sequence routines produce bytecode that the verifier checks.
 % 本地发射是一个几十行的函数，写出一两条机器指令，是唯一一段输出不被验证器看到的每操作代码；证明序列例程产生的字节码由验证器检查。
-Re-verifying the lowered program therefore cannot replace a review of this kernel code, which, like any kernel module, must be free of ordinary kernel bugs.
-% 因此重新验证降低后的程序不能代替对这些内核代码的审查，它们与任何内核模块一样，必须没有普通的内核错误。
+Re-verifying the program therefore cannot replace a review of this kernel code, which, like any kernel module, must be free of ordinary kernel bugs.
+% 因此重新验证程序不能代替对这些内核代码的审查，它们与任何内核模块一样，必须没有普通的内核错误。
 Adding a pattern for an existing operation changes only the userspace recognizer.
 % 为已有操作添加匹配模式只需修改用户空间识别器。
 A new operation also needs a kernel module with parameter checks, a proof-sequence routine, native emits, and registration, as well as its Lean proof (\S\ref{sec:formal-verification}); the ARM64 bit-extract module, for example, has 98 lines.

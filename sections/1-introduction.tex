@@ -79,7 +79,7 @@
 
 Extended Berkeley Packet Filter (eBPF) safely extends OS kernels and is widely used in production for networking~\cite{cilium,katran}, observability~\cite{bpftrace,bcc}, security~\cite{krsi_lwn,tracee}, and scheduling~\cite{sched_ext_lwn}.
 % 扩展伯克利数据包过滤器（eBPF）安全地扩展操作系统内核，并在生产中被广泛使用，涵盖网络、可观测性、安全和调度等领域。
-Its safety comes from a compilation pipeline that verifies every program before execution. In eBPF, a userspace compiler lowers each program to eBPF bytecode, the in-kernel verifier checks the bytecode for safety properties such as memory safety and termination, and the kernel's just-in-time compiler (the kernel JIT) translates the verified bytecode to native code.
+Its safety comes from a compilation pipeline that verifies every program before execution. In eBPF, a userspace compiler compiles each program to eBPF bytecode, the in-kernel verifier checks the bytecode for safety properties such as memory safety and termination, and the kernel's just-in-time compiler (the kernel JIT) translates the verified bytecode to native code.
 % 其安全性来自在执行前验证每个程序的编译管线：用户空间编译器将程序降低为 eBPF 字节码，内核验证器检查字节码的内存安全和终止性等安全属性，内核即时编译器（内核 JIT）再将验证后的字节码翻译为本地代码。
 The eBPF design favors safety over speed: the eBPF instruction set is designed to be verifiable and portable, and because the verifier checks only the bytecode, the kernel must trust the JIT and keeps it deliberately simple, translating one opcode at a time.
 % eBPF 的设计偏重安全而非速度：eBPF 指令集是为可验证和可移植而设计的；而由于验证器只检查字节码，内核必须信任 JIT，因此刻意保持 JIT 简单，一次只翻译一个操作码。
