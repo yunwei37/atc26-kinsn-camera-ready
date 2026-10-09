@@ -200,8 +200,8 @@ A cost model that combines program profiles with processor information could rep
 
 Unlike RQ1--RQ3, which evaluate \lang's operations, RQ4 uses \tool itself to replace whole Cilium programs with native code, placing \tool in a broader design space.
 % 与评估 \lang 操作的 RQ1--RQ3 不同，RQ4 用 \tool 本身把整个 Cilium 程序替换为本地代码，把 \tool 放到更大的设计空间中考察。
-In this experiment, each Cilium BPF program is compiled from the same C source along two paths: the proof sequence is the normal eBPF bytecode that the verifier checks, while the native emit is the same source compiled with LLVM \texttt{-O2} directly to native code.
-% 在这个实验中，每个 Cilium BPF 程序从同一份 C 源码沿两条路径编译：证明序列是验证器检查的普通 eBPF 字节码，本地发射是用 LLVM -O2 把同一源码直接编译成的本地代码。
+In this experiment, each Cilium BPF program is compiled from the same C source along two paths: the proof sequence is the normal eBPF bytecode that the verifier checks, while the native code is the same source compiled with LLVM \texttt{-O2} directly to native code.
+% 在这个实验中，每个 Cilium BPF 程序从同一份 C 源码沿两条路径编译：证明序列是验证器检查的普通 eBPF 字节码，本地代码是用 LLVM -O2 把同一源码直接编译成的本地代码。
 The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code and the path that loads it become part of the TCB.
 % 验证器仍在每次加载时检查 eBPF 证明序列，但两种编译结果之间的等价性是被信任的而非被证明的，因此应用的本地代码及加载它的路径成为 TCB 的一部分。
 The 2.358$\times$ upper bound is not comparable to the characterization's 1.57$\times$ microbenchmark gap, which measures microbenchmarks in isolation rather than Cilium's full datapath.
@@ -242,5 +242,5 @@ The added trust is correspondingly small.
 % 相应地，增加的信任也很小。
 Proving whole-program native code equivalent to its bytecode amounts to verifying an optimizing compiler's output for an entire program, which remains impractical, so whole-program replacement must trust that code without proof.
 % 证明整个程序的本地代码与其字节码等价，相当于验证优化编译器对整个程序的输出，目前仍不现实，因此整程序替换只能在没有证明的情况下信任这些代码。
-An operation's native emit, in contrast, writes one or two machine instructions, and two lemmas prove it equivalent to its proof sequence (\S\ref{sec:formal-verification}).
-% 相比之下，一个操作的本地发射只写出一两条机器指令，两个引理就能证明它与证明序列等价。
+An operation's native code, in contrast, is one or two machine instructions, and two lemmas prove it equivalent to its proof sequence (\S\ref{sec:formal-verification}).
+% 相比之下，一个操作的本地代码只有一两条机器指令，两个引理就能证明它与证明序列等价。

@@ -125,19 +125,19 @@ We present \tool, an extension interface that lets kernel modules introduce new 
 Our key insight is that a new operation can be verified through an equivalent vanilla eBPF form, while the CPU runs its native implementation.
 % \note{same issue as in abstract}
 % 我们的核心洞见是：新操作可以通过一个等价的原生 eBPF 形式来验证，而 CPU 运行它的本地实现。
-\tool therefore gives each operation two forms: a \emph{proof sequence} of vanilla (unextended) eBPF and a \emph{native emit} of machine instructions.
-% 因此 \tool 给每个操作两种形式：原生（未扩展）eBPF 的\emph{证明序列}，和机器指令的\emph{本地发射}。
+\tool therefore gives each operation two forms: a \emph{proof sequence} of vanilla (unextended) eBPF and native code for each architecture.
+% 因此 \tool 给每个操作两种形式：原生（未扩展）eBPF 的\emph{证明序列}，和机器指令的\emph{本地代码}。
 Because every proof sequence is vanilla eBPF, verification remains architecture-independent.
 % 由于每个证明序列都是原生 eBPF，验证保持与架构无关。
 A compile-time recognizer rewrites programs to use the new operations, and the verifier re-checks the proof sequences on every load.
 % 编译时识别器重写程序以使用新操作，验证器在每次加载时重新检查证明序列。
 Neither the recognizer nor the proof sequences are part of the TCB, so a recognizer bug cannot make a verified program unsafe.
 % 识别器和证明序列都不属于 TCB，因此识别器的错误不会使已验证的程序变得不安全。
-Since the verifier never sees the native emit, the native emit is the only code each operation adds to the TCB.
-% 由于验证器从未看到本地发射，本地发射是每个操作加入 TCB 的唯一代码。
-We therefore prove in Lean 4 that, for each operation, the native emit computes the same result as its proof sequence, which extends the verifier's guarantee to the native code.
+Since the verifier never sees an operation's native code, that native code is the only code each operation adds to the TCB.
+% 由于验证器从未看到本地代码，本地代码是每个操作加入 TCB 的唯一代码。
+We therefore prove in Lean 4 that, for each operation, the native code computes the same result as its proof sequence, which extends the verifier's guarantee to that code.
 % \note{what is this trust gap?}
-% 因此我们在 Lean 4 中证明，对于每个操作，本地发射与其证明序列计算相同的结果，从而将验证器的保证延伸到本地代码。
+% 因此我们在 Lean 4 中证明，对于每个操作，本地代码与其证明序列计算相同的结果，从而将验证器的保证延伸到本地代码。
 % We implement \tool in the Linux kernel and userspace tooling as a small, one-time kernel patch, a compile-time recognizer, and kernel modules that supply the operations.
 % \note{repeat}
 
@@ -158,6 +158,6 @@ We make the following contributions:
     \item We characterize the performance gap between eBPF and native code and attribute it to the kernel JIT's per-opcode code generation, with the clearest losses from hardware idioms (\S\ref{sec:characterization}).
     \item We present \tool, an extension interface that adds new operations to the eBPF compilation pipeline while reusing the existing verifier for safety (\S\ref{sec:mechanism}).
     \item Using \tool, we build \lang, a set of seven hardware-idiom operations that the simple kernel JIT emits directly (\S\ref{sec:lang}).
-    \item We prove in Lean 4 that each \lang native emit computes the same result as its proof sequence, extending the verifier's guarantee to the native code (\S\ref{sec:formal-verification}).
+    \item We prove in Lean 4 that the native code of each \lang operation computes the same result as its proof sequence, extending the verifier's guarantee to that code (\S\ref{sec:formal-verification}).
     \item Our implementation in the Linux kernel and userspace tooling (\S\ref{sec:implementation}) recovers 42\% of the x86-64 gap to native code (\S\ref{sec:eval}).
 \end{itemize}
