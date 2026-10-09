@@ -127,7 +127,7 @@ Our key insight is that a new operation can be verified through an equivalent va
 % 我们的核心洞见是：新操作可以通过一个等价的原生 eBPF 形式来验证，而 CPU 运行它的本地代码。
 \tool therefore gives each operation two forms: a \emph{proof sequence} of vanilla (unextended) eBPF and native code for each architecture.
 \note{operation or extended bytecode?}
-\note{form 1: eBPF bytecode}
+\note{form 1: (can be expanded to original) BPF bytecode; form 2: (can be emitted as) native code}
 % 因此 \tool 给每个操作两种形式：原生（未扩展）eBPF 的\emph{证明序列}，和机器指令的\emph{本地代码}。
 Because every proof sequence is vanilla eBPF, verification remains architecture-independent.
 % 由于每个证明序列都是原生 eBPF，验证保持与架构无关。
@@ -151,7 +151,7 @@ On microbenchmarks, \lang speeds up eBPF programs by 24\% on x86-64 and 22\% on 
 % 在微基准测试上，\lang 相对未修改的管线使 eBPF 在 x86-64 上几何平均提速 24\%，在 ARM64 上提速 22\%，恢复了 x86-64 上与本地代码差距的 42\%，并使本地代码缩小 12--23\%。
 On production applications, it improves throughput by up to 12\%. The gains are smaller because a real datapath spends most of its time in helper calls, map accesses, and tail calls, which instruction selection cannot reach (\S\ref{sec:eval}).
 % 在生产应用上，它使吞吐量提高达 12\%；收益较小是因为真实数据通路的大部分时间花在 helper 调用、map 访问和尾调用上，这些是指令选择无法触及的。
-The same interface also supports replacing whole programs with native code, which reaches 2.358$\times$ on Cilium when the application's entire native code is trusted and thus bounds what a larger TCB can buy (\S\ref{subsec:native_upper_bound}).
+The same interface also supports replacing whole programs with native code, which reaches 2.358$\times$ on Cilium when the application's entire native code is trusted and thus bounds what a larger TCB can buy \note{trade for?} (\S\ref{subsec:native_upper_bound}).
 % 同样的接口还支持整个程序的本地替换，在信任应用全部本地代码时在 Cilium 上达到 2.358 倍，从而给出了更大 TCB 所能换来的性能上限。
 
 \noindent\textbf{Contributions.}

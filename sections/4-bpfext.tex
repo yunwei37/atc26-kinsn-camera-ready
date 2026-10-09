@@ -290,7 +290,7 @@ Consequently, the userspace recognizer lies outside the TCB. A wrong rewrite is 
 
 The verifier checks the program with proof sequences, but the JIT compiles the program with extended instructions, so what the verifier proves about the first must also hold for the second.
 % 验证器检查的是含证明序列的程序，而 JIT 编译的是含扩展指令的程序，因此验证器对前者证明的性质必须对后者同样成立。
-When the extended instructions are restored, each \emph{proof region}, the span its proof sequence occupies, is replaced by its extended instruction again, and nothing else changes.
+When the extended instructions are restored, each \emph{proof region} \note{isn't this just kinsns}, the span its proof sequence occupies, is replaced by its extended instruction again, and nothing else changes.
 % 恢复阶段将每个\emph{证明区域}（其证明序列占据的范围）重新被其扩展指令替换，其他不变。
 For this to hold, control must enter a region only at its top and leave only past its end, like a single instruction.
 % 要做到这一点，控制流只能从区域顶部进入、只能从区域末尾之后离开，就像单条指令一样。
@@ -347,7 +347,7 @@ The Lean development has \note{[TBD]} lines and took \note{[TBD]} person-weeks t
 The artifact includes the Lean proofs and instructions for checking them.
 % artifact 包含 Lean 证明及其检查说明。
 
-\subsection{\lang: Hardware-Idiom Operations}
+\subsection{\lang: Hardware-Idiom Operations \note{Extended eBPF Bytecode?}}
 \label{sec:lang}
 % \lang：硬件习语操作
 

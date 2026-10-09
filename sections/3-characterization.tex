@@ -113,7 +113,7 @@ We characterize the performance gap between eBPF and native code on microbenchma
 On them, the same source program runs 1.57$\times$ faster on x86-64 and 1.98$\times$ faster on ARM64 when compiled directly to native code than through the eBPF compilation pipeline (Figure~\ref{fig:char-pure-percase}).
 % 在这些基准上，同样的源程序直接编译为本地代码时，比经过 eBPF 编译管线快 1.57 倍（x86-64）和 1.98 倍（ARM64）。
 The gap is consistent: native code is more than 2\% faster than the kernel JIT's code on 25 of the 27 benchmarks on x86-64 and on all 27 on ARM64. 
-\note{kernel JIT-> BPF JIT}
+\note{kernel JIT-> eBPF JIT. now there are kernel JIT / kernel eBPF JIT / eBPF JIT}
 % 这一差距是一致的：本地代码在 x86-64 上 27 个基准中的 25 个、在 ARM64 上全部 27 个比内核 JIT 快 2\% 以上。
 We break the gap down through three questions:
 % 我们通过三个问题分解这一差距：
