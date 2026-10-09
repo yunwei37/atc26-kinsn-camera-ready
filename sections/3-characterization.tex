@@ -104,15 +104,15 @@
 
 %%%%%%%%%%%%Outline%%%%%%%%%%%%%%%%%%
 
-\section{Characterization of the eBPF-Native Performance Gap}
+\section{Characterizing the Gap Between eBPF and Native Code}
 \label{sec:characterization}
 % eBPF 与原生性能差距的特征分析
 
-We characterize the eBPF-native performance gap on microbenchmarks, small programs that only compute and make no helper calls or map accesses.
+We characterize the performance gap between eBPF and native code on microbenchmarks, small programs that only compute and make no helper calls or map accesses.
 % 我们在微基准测试上特征化 eBPF 与本地代码之间的性能差距，这些是只做计算、不调用辅助函数也不访问映射的小程序。
-On them, the same source program runs 1.57$\times$ slower on x86-64, and 1.98$\times$ slower on ARM64, through the eBPF compilation pipeline than under direct native compilation (Figure~\ref{fig:char-pure-percase}).
-% 在这些基准上，同样的源程序通过 eBPF 编译管线比直接原生编译慢 1.57 倍（x86-64）和 1.98 倍（ARM64）。
-The gap is consistent: native code beats the kernel JIT by more than 2\% on 25 of the 27 benchmarks on x86-64 and on all 27 on ARM64.
+On them, the same source program runs 1.57$\times$ faster on x86-64 and 1.98$\times$ faster on ARM64 when compiled directly to native code than through the eBPF compilation pipeline (Figure~\ref{fig:char-pure-percase}).
+% 在这些基准上，同样的源程序直接编译为本地代码时，比经过 eBPF 编译管线快 1.57 倍（x86-64）和 1.98 倍（ARM64）。
+The gap is consistent: native code is more than 2\% faster than the kernel JIT's code on 25 of the 27 benchmarks on x86-64 and on all 27 on ARM64.
 % 这一差距是一致的：本地代码在 x86-64 上 27 个基准中的 25 个、在 ARM64 上全部 27 个比内核 JIT 快 2\% 以上。
 We break the gap down through three questions:
 % 我们通过三个问题分解这一差距：
@@ -127,12 +127,12 @@ We break the gap down through three questions:
 
 The first separates the cost of in-kernel execution from the quality of the machine code the pipeline generates.
 % 第一个问题将内核内执行成本与管线生成的机器代码质量分开。
-Within code generation, the second weighs the kernel JIT against the bytecode it compiles.
-% 在代码生成内部，第二个问题权衡逐操作码内核 JIT 与 JIT 编译的字节码。
+Within code generation, the second separates the kernel JIT's share of the gap from the bytecode's.
+% 在代码生成内部，第二个问题把差距中内核 JIT 的部分和字节码的部分分开。
 The third identifies which operations the JIT compiles poorly, so that a fix can target them.
 % 第三个问题识别 JIT 编译效果差的操作，以便修复能够针对它们。
-The section closes with why the kernel cannot host an optimizing compiler (\S\ref{subsec:char-challenges}).
-% 本节以为什么内核不能托管优化编译器结束。
+The section closes with why the kernel should not host an optimizing compiler (\S\ref{subsec:char-challenges}).
+% 本节最后说明为什么内核不应容纳优化编译器。
 
 \subsection{Experimental Setup}
 \label{subsec:char-method}
@@ -197,7 +197,7 @@ The cost is small, and the gap comes mainly from code generation.
 % 成本很小，差距主要来自代码生成。
 
 \begin{finding}
-\finlabel The eBPF-native gap comes from code generation. In-kernel execution slows native code by only about 2\% on x86-64 and 5\% on ARM64.
+\finlabel The gap between eBPF and native code comes from code generation. In-kernel execution slows native code by only about 2\% on x86-64 and 5\% on ARM64.
 % 发现：eBPF 与原生的差距来自代码生成。内核内执行仅使原生代码在 x86-64 上慢约 2\%，在 ARM64 上慢约 5\%。
 \end{finding}
 
@@ -221,8 +221,8 @@ The remaining share of the gap, 7\% on x86-64 and 6\% on ARM64, comes from the b
 % 剩余的差距份额，x86-64 上 7\%，ARM64 上 6\%，来自字节码形式，它在任何编译器运行前固定了寄存器集和调用约定等选择。
 
 \begin{finding}
-\finlabel The kernel JIT is the dominant source of the generated code's slowness. An optimizing compiler recovers 93--94\% of the gap from the same verified bytecode. The verified bytecode carries most of what a compiler needs to generate fast code.
-% 发现：内核 JIT 是生成代码慢的主要原因。优化编译器从相同的验证字节码中恢复 93--94\% 的差距。验证字节码携带了编译器生成快速代码所需的大部分信息。
+\finlabel The kernel JIT causes most of the gap. An optimizing compiler recovers 93--94\% of the gap from the same verified bytecode. The verified bytecode carries most of what a compiler needs to generate fast code.
+% 发现：内核 JIT 造成了大部分差距。优化编译器从相同的验证字节码中恢复 93--94\% 的差距。验证字节码携带了编译器生成快速代码所需的大部分信息。
 \end{finding}
 
 \subsection{C-RQ3: Which Operations Does the Kernel JIT Compile Poorly?}
@@ -235,12 +235,12 @@ A hardware idiom has no single-instruction form in the eBPF instruction set, so 
 % 硬件习语在 eBPF 指令集中没有单指令形式，因此 eBPF 后端将习语发射为多条字节码指令。
 The kernel JIT then translates each bytecode instruction separately into one or more machine instructions.
 % 然后内核 JIT 将每条字节码指令单独翻译为一条或多条机器指令。
-Figure~\ref{fig:jit-dump} shows a 64-bit rotate with a variable shift under the kernel JIT and under direct native compilation.
-% 图显示了 64 位可变位移旋转在内核 JIT 和直接原生编译下的情况。
+Figure~\ref{fig:jit-dump} shows a 64-bit rotate with a variable shift under the kernel JIT and when compiled directly to native code.
+% 图显示了 64 位可变位移旋转在内核 JIT 下和直接编译为本地代码时的情况。
 The rotate arrives at the kernel JIT as eight bytecode instructions and is emitted as 15 machine instructions.
 % 旋转以 8 条字节码指令到达内核 JIT，被发射为 15 条机器指令。
-Direct native compilation uses a single rotate instruction, \texttt{ROL} on x86-64 or \texttt{ROR} on ARM64.
-% 直接原生编译使用单条旋转指令，x86-64 上是 ROL，ARM64 上是 ROR。
+Compiled directly to native code, the rotate becomes a single instruction, \texttt{ROL} on x86-64 or \texttt{ROR} on ARM64.
+% 直接编译为本地代码时，旋转只是一条指令，x86-64 上是 ROL，ARM64 上是 ROR。
 
 \input{figures/sec-3-jit-dump}
 
@@ -250,8 +250,8 @@ Table~\ref{tab:isa-gap} lists the idioms with their instruction counts in native
 % 表列出了这些习语，以及它们在本地代码、eBPF 字节码和内核 JIT 输出中的指令数。
 Across five small test programs on x86-64 that each repeat one idiom, the kernel JIT emits 1.25--2.7$\times$ as many instructions as userspace LLVM-BPF for the same programs.
 % 在 x86-64 上的五个小测试程序中，每个程序重复一种习语，内核 JIT 发射的指令是用户空间 LLVM-BPF 的 1.25--2.7 倍。
-Code size shows the cost across all 27 benchmarks.
-% 代码大小显示了全部 27 个基准上的代价。
+Code size shows how much the kernel JIT inflates code across all 27 benchmarks.
+% 代码大小显示了内核 JIT 在全部 27 个基准上把代码膨胀了多少。
 In-kernel native machine code is about half the size of the kernel JIT output, 0.54$\times$ on x86-64 and 0.49$\times$ on ARM64, an aggregate that includes losses beyond the idioms.
 % 内核内原生机器代码大约是内核 JIT 输出的一半大小，x86-64 上 0.54 倍，ARM64 上 0.49 倍，这一汇总包括习语之外的损失。
 
@@ -274,10 +274,10 @@ The verifier checks only the bytecode, so the kernel would have to trust the far
 % 验证器只检查字节码，因此内核必须信任生成原生代码的更大编译器。
 Such a compiler would also grow the kernel code that must be maintained and audited for each supported architecture.
 % 这样的编译器还会增加每个支持架构必须维护和审计的内核代码。
-A practical fix instead keeps the simple kernel JIT and targets the idiom share of the loss by letting the JIT emit hardware idioms directly.
+A practical fix instead keeps the simple kernel JIT and targets the share of the loss that comes from hardware idioms by letting the JIT emit hardware idioms directly.
 % 实际的修复方案是保持简单的内核 JIT，通过让 JIT 直接发射硬件习语来针对损失中的习语份额。
 
-The fix targets the operations C-RQ3 identifies, and \S\ref{sec:mechanism} presents a design that achieves it.
-% 这一修复针对 C-RQ3 识别出的操作，\S\ref{sec:mechanism} 给出实现它的设计。
+\S\ref{sec:mechanism} presents a design that achieves this fix.
+% \S\ref{sec:mechanism} 给出实现这一修复的设计。
 The in-kernel execution cost (C-RQ1) and the share of the gap due to the bytecode itself (C-RQ2) stay out of scope, and \S\ref{sec:eval} measures how much of the kernel JIT's loss the idioms carry.
 % 内核内执行代价（C-RQ1）和由字节码本身造成的那部分差距（C-RQ2）不在范围内，评估测量习语承载了多少内核 JIT 的损失。
