@@ -10,7 +10,7 @@ Insn & Field & Bits & Meaning \tabularnewline
 Call & \texttt{imm} & 32 & \raggedright BTF ID of the operation's stub kfunc \tabularnewline
  & \texttt{off} & 16 & \raggedright Index into \texttt{fd\_array} for the module's BTF file descriptor \tabularnewline
 \midrule
-Sidecar & \texttt{dst\_reg} & [3:0] & \raggedright Destination register or per-operation form tag \tabularnewline
+Sidecar & \texttt{dst\_reg} & [3:0] & \raggedright Destination register or a tag that selects the operation's variant \tabularnewline
  & \texttt{off} & [19:4] & \raggedright Offset or auxiliary field per operation \tabularnewline
  & \texttt{imm} & [51:20] & \raggedright Immediate value or configuration per operation \tabularnewline
 \bottomrule

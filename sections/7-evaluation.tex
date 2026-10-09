@@ -48,9 +48,9 @@ Unless otherwise stated, each experiment uses three measured runs and reports th
 % 除非另有说明，每个实验使用三次测量运行并报告中位数。
 Execution-time and throughput ratios are normalized to the original kernel JIT, so values above 1$\times$ indicate faster execution or higher throughput.
 % 执行时间和吞吐量比率归一化到原版内核 JIT，因此高于 1 倍的值表示更快的执行或更高的吞吐量。
-BPF cost is the average run time of a BPF program per invocation, as reported by the kernel; BPF-cost ratios divide the \lang cost by the original cost, so values below 1$\times$ indicate lower cost.
+BPF cost is the average run time of a BPF program per invocation, as reported by the kernel. BPF-cost ratios divide the \lang cost by the original cost, so values below 1$\times$ indicate lower cost.
 % BPF 成本是内核报告的 BPF 程序每次调用的平均运行时间；BPF 成本比率是 \lang 成本除以原版成本，因此低于 1 倍的值表示成本更低。
-We compute it from the kernel's per-program runtime statistics as the change in total run time divided by the change in run count, match programs across the two runs by name, type, and occurrence, and drop programs that run fewer than 100 times in either run.
+We compute it from the kernel's per-program runtime statistics as the change in total run time divided by the change in run count, match programs across the two runs by name, type, and order of appearance, and drop programs that run fewer than 100 times in either run.
 % 我们根据内核的逐程序运行时统计计算它：总运行时间的变化除以运行次数的变化；按名称、类型和出现顺序在两次运行之间匹配程序，并丢弃在任一次运行中运行少于 100 次的程序。
 
 

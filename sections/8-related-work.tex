@@ -66,7 +66,7 @@
 % \noindent\textbf{eBPF 优化。}
 Bytecode optimizers improve eBPF programs within the existing instruction set: K2~\cite{xu2021synthesizing} and EPSO~\cite{zhu2025epso} search for shorter bytecode through stochastic synthesis and offline superoptimization, Merlin~\cite{mao2024merlin} rewrites programs at the LLVM-IR and bytecode levels, and ePass~\cite{xiang2025epass} lifts bytecode into SSA form for program transformation.
 % 字节码优化器在现有指令集内改进 eBPF 程序：K2 和 EPSO 分别通过随机合成和离线超优化搜索更短的字节码，Merlin 在 LLVM-IR 和字节码级别重写程序，ePass 将字节码提升为 SSA 形式以进行程序转换。
-KFuse~\cite{kfuse} merges separately verified programs in the kernel, and Shahinfar et al.~\cite{shahinfar2026fun} compile verified programs to native code with a userspace optimizer; both transform programs after verification, so the kernel must trust the transformation.
+KFuse~\cite{kfuse} merges separately verified programs in the kernel, and Shahinfar et al.~\cite{shahinfar2026fun} compile verified programs to native code with a userspace optimizer. Both transform programs after verification, so the kernel must trust the transformation.
 % KFuse 在内核中合并分别验证过的程序，Shahinfar 等人用用户空间优化器把验证过的程序编译为本地代码；两者都在验证之后变换程序，因此内核必须信任这些变换。
 bpftime~\cite{zheng2025extending} instead runs eBPF programs in userspace, where an optimizing compiler generates the native code.
 % bpftime 则在用户空间运行 eBPF 程序，由优化编译器生成本地代码。
@@ -77,7 +77,7 @@ bpftime~\cite{zheng2025extending} instead runs eBPF programs in userspace, where
 % \noindent\textbf{扩展 eBPF 的指令和函数。}
 The existing ways to add operations are kfuncs and instruction-set extensions.
 % 现有添加操作的方式是 kfunc 和指令集扩展。
-A kfunc~\cite{kfuncs} exposes a kernel function for eBPF programs to call; the verifier checks its arguments against BTF types, but its body runs as native code outside the verifier's analysis.
+A kfunc~\cite{kfuncs} exposes a kernel function for eBPF programs to call. The verifier checks its arguments against BTF types, but its body runs as native code outside the verifier's analysis.
 % kfunc 将内核函数暴露给 eBPF 程序调用；验证器根据 BTF 类型检查其参数，但其函数体作为本地代码运行，不在验证器的分析范围内。
 hXDP~\cite{brunella2020hxdp} extends the instruction set for FPGAs, but the verifier does not check the new instructions.
 % hXDP 为 FPGA 扩展了指令集，但验证器不检查这些新指令。
@@ -98,7 +98,7 @@ CompCert~\cite{leroy2009formal} verifies a C compiler and Alive2~\cite{lopes2021
 % CompCert 验证一个 C 编译器，Alive2 验证 LLVM 优化，而 Jitk、Jitterbug、JitSynth 和 CertrBPF 验证 BPF 的 JIT 和解释器。
 All of them target a fixed instruction set, whereas each \lang operation carries its own Lean 4 proof that its native code matches its proof sequence (\S\ref{sec:formal-verification}).
 % 它们都针对固定的指令集，而每个 \lang 操作都带有自己的 Lean 4 证明，证明其本地代码与证明序列一致。
-Agni~\cite{vishwanathan2023verifying} verifies the verifier's range analysis offline, which \tool's safety relies on, and BCF~\cite{sun2025prove} supplies proofs from userspace that the kernel checks at load time; \lang's proofs instead stay offline and never enter the kernel.
+Agni~\cite{vishwanathan2023verifying} verifies the verifier's range analysis offline, which \tool's safety relies on, and BCF~\cite{sun2025prove} supplies proofs from userspace that the kernel checks at load time. \lang's proofs instead stay offline and never enter the kernel.
 % Agni 离线验证验证器的范围分析，\tool 的安全性依赖于其正确性；BCF 从用户空间提供证明，由内核在加载时检查；而 \lang 的证明保持离线，从不进入内核。
 Proof-carrying code (PCC)~\cite{necula1997pcc} is the closest ancestor of \tool: both admit untrusted code into the kernel only after an in-kernel check, but whereas PCC installs a new proof checker, \tool reuses the existing eBPF verifier.
 % 携带证明的代码（PCC）是 \tool 最接近的前身：两者都只在内核内检查之后才接纳不可信代码，但 PCC 引入了新的证明检查器，而 \tool 复用现有的 eBPF 验证器。

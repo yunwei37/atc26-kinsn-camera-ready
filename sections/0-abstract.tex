@@ -43,7 +43,7 @@ Our key insight is that a new operation can be verified through an equivalent va
 % We present \tool, an interface that lets kernel modules introduce extended eBPF instructions without further kernel patches or verifier changes.
 %  Extended eBPF instructions support efficient native implementations while retaining the existing verifier’s safety checks through semantically equivalent standard eBPF instructions.}
 % 我们的核心洞见是：新操作可以通过一个等价的原生 eBPF 形式来验证，而 CPU 运行它的本地代码。
-The verifier checks the eBPF form but never sees the native code, which is thus the only code each operation adds to the TCB; we prove in Lean 4 that it matches its eBPF form.
+The verifier checks the eBPF form but never sees the native code, which is thus the only code each operation adds to the TCB. We prove in Lean 4 that it matches its eBPF form.
 % \note{[zhengjie] Since the verifier checks only the eBPF form: is this causal?}
 % 验证器检查 eBPF 形式，但从不看到本地代码，因此本地代码是每个操作对 TCB 的唯一增加；我们在 Lean 4 中证明它与其 eBPF 形式一致。
 Using \tool, we build \lang, seven hardware-idiom operations such as rotate and conditional select.

@@ -1,11 +1,11 @@
 \begin{table}[t]
 \centering
 \small
-\caption{The seven \lang operations, each with the canonical proof sequence and the native emit per architecture. Exact proof sequences vary by operation variant and architecture (\S\ref{subsec:pipeline}). A dash marks an architecture with no native emit, where the operation falls back to its proof sequence. Each native-emit cell lists the instructions emitted for one operation instance. Table~\ref{tab:isa-gap} counts the instructions along each compilation path for the idioms the two tables share, and the native compiler's instruction choice there can differ from the native emit here.}
+\caption{The seven \lang operations, each with its typical proof sequence and the native code per architecture. Exact proof sequences vary by operation variant and architecture (\S\ref{subsec:pipeline}). A dash marks an architecture with no native code, where the operation falls back to its proof sequence. Each native-code cell lists the instructions emitted for one operation instance. Table~\ref{tab:isa-gap} counts the instructions along each compilation path for the idioms the two tables share, and the native compiler's instruction choice there can differ from the native code here.}
 \label{tab:descriptors}
 \begin{tabular}{@{}llll@{}}
 \toprule
- & & \multicolumn{2}{c}{Native emit} \\
+ & & \multicolumn{2}{c}{Native code} \\
 \cmidrule(lr){3-4}
 Operation & Proof sequence & x86-64 & ARM64 \\
 \midrule

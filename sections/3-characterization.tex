@@ -142,7 +142,7 @@ The section closes with why the kernel should not host an optimizing compiler (\
 % \noindent\textbf{基准测试。}
 We use 27 microbenchmarks, listed in Table~\ref{tab:microbenchmarks}.
 % 我们使用 27 个微基准测试，见表。
-Twelve of them re-implement the core computation of programs in Katran, Cilium, BCC, bpftrace, Tetragon, Tracee, and the OpenTelemetry eBPF profiler; the other fifteen are synthetic programs for packet parsing, hashing, and search.
+Twelve of them re-implement the core computation of programs in Katran, Cilium, BCC, bpftrace, Tetragon, Tracee, and the OpenTelemetry eBPF profiler. The other fifteen are synthetic programs for packet parsing, hashing, and search.
 % 其中 12 个复现了 Katran、Cilium、BCC、bpftrace、Tetragon、Tracee 和 OpenTelemetry eBPF profiler 中程序的核心计算；其余 15 个是用于包解析、哈希和搜索的合成程序。
 The benchmarks make no helper calls or map accesses, so each measurement isolates instruction execution.
 % 这些基准不调用辅助函数也不访问映射，因此每次测量只反映指令执行。
@@ -189,7 +189,7 @@ In the kernel, native code runs about as fast as in userspace.
 % 在内核中，原生代码运行速度与用户空间大致相同。
 In-kernel native and userspace native run the same native code and differ only in where it runs.
 % 内核内原生和用户空间原生运行相同的本地代码，只在运行位置上不同。
-On x86-64, Figure~\ref{fig:char-pure-percase} shows them at 1.55$\times$ and 1.57$\times$ over the kernel JIT, a difference of about 2\%; on ARM64 the difference is about 5\%, 1.88$\times$ against 1.98$\times$.
+On x86-64, Figure~\ref{fig:char-pure-percase} shows them at 1.55$\times$ and 1.57$\times$ over the kernel JIT, a difference of about 2\%. On ARM64 the difference is about 5\%, 1.88$\times$ against 1.98$\times$.
 % 在 x86-64 上，图显示二者相对内核 JIT 分别为 1.55 倍和 1.57 倍，差异约 2\%；在 ARM64 上差异约 5\%，1.88 倍对 1.98 倍。
 This difference therefore bounds the cost of in-kernel execution at about 2--5\%.
 % 因此这一差异将内核内执行的代价限定在约 2--5\%。
