@@ -165,5 +165,5 @@ Re-verifying the lowered program therefore cannot replace a review of this kerne
 % 因此重新验证降低后的程序不能代替对这些内核代码的审查，它们与任何内核模块一样，必须没有普通的内核错误。
 Adding a pattern for an existing operation changes only the userspace recognizer.
 % 为已有操作添加匹配模式只需修改用户空间识别器。
-A new operation also needs a kernel module with parameter checks, a proof-sequence routine, native emits, and registration, as well as its Lean proof (\S\ref{sec:formal-verification}); the ARM64 bit-extract module, for example, has \note{[TBD: 78?]} lines.
-% 新操作还需要一个内核模块（包括参数检查、证明序列例程、本地发射和注册）以及它的 Lean 证明；例如 ARM64 位提取模块有 [TBD: 78?] 行。
+A new operation also needs a kernel module with parameter checks, a proof-sequence routine, native emits, and registration, as well as its Lean proof (\S\ref{sec:formal-verification}); the ARM64 bit-extract module, for example, has 98 lines.
+% 新操作还需要一个内核模块（包括参数检查、证明序列例程、本地发射和注册）以及它的 Lean 证明；例如 ARM64 位提取模块有 98 行。

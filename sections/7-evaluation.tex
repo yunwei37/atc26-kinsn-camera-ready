@@ -134,7 +134,7 @@ The sites span five operations: LEA accounts for 2346, byte swap for 766, bulk c
 
 \textbf{Katran on ARM64.}
 % \textbf{ARM64 上的 Katran。}
-On ARM64, a conservative \lang policy rewrites 21 sites and improves Katran's end-to-end throughput by 1.065$\times$ over the original kernel JIT.
+On ARM64, a conservative \lang policy, which enables only rotate, bit extract, and conditional select, rewrites 21 sites and improves Katran's end-to-end throughput by 1.065$\times$ over the original kernel JIT.
 % 在 ARM64 上，一个保守的 \lang 策略改写 21 个站点，使 Katran 的端到端吞吐量相对原版内核 JIT 提高到 1.065 倍。
 Because a single hot XDP program dominates Katran's datapath, the result is easy to attribute: the program that \lang rewrites is the one on the critical path.
 % 由于 Katran 的数据路径由单个热 XDP 程序主导，结果很容易归因：被 \lang 改写的程序正是关键路径上的程序。
@@ -163,8 +163,8 @@ Figure~\ref{fig:app_policy_probes} tests this policy by changing it in two ways 
 
 
 
-For Cilium, we start from the full x86-64 policy used in RQ2, which rewrites 4086 sites, improves throughput to 1.074$\times$, and leaves BPF cost nearly unchanged at 1.009$\times$ (Figure~\ref{fig:app_policy_probes}).
-% 对于 Cilium，我们从 RQ2 使用的完整 x86-64 策略出发：它改写 4086 个站点，吞吐量提高到 1.074 倍，BPF 成本几乎不变，为 1.009 倍。
+For Cilium, we start from the full x86-64 policy used in RQ2, which rewrites 4086 sites, improves throughput to 1.074$\times$, and leaves BPF cost nearly unchanged at 1.010$\times$ (Figure~\ref{fig:app_policy_probes}).
+% 对于 Cilium，我们从 RQ2 使用的完整 x86-64 策略出发：它改写 4086 个站点，吞吐量提高到 1.074 倍，BPF 成本几乎不变，为 1.010 倍。
 Disabling only the bulk copy operation reduces the rewritten sites to 3512 but raises throughput further to 1.119$\times$.
 % 只禁用批量拷贝操作后，改写站点减少到 3512 个，吞吐量却进一步提高到 1.119 倍。
 BPF cost also rises, to 1.062$\times$, so the result does not mean that bulk copy is harmful in general.
@@ -238,3 +238,5 @@ In-kernel native execution is the fastest but trusts the native code of whole pr
 % \lang 介于两者之间：它在 Cilium 上 1.074 倍的吞吐量提升追回了与 2.358 倍上界之间差距的 5.4\%，而在微基准上是 42\%，因为真实数据路径的大部分时间花在 \lang 不针对的辅助函数、map 和尾调用上。
 \lang does not reach the upper bound, but it speeds up programs through a small set of kernel-defined operations rather than trusting the native code of whole programs.
 % \lang 达不到上界，但它通过一小组由内核定义的操作来加速程序，而不必信任整个程序的本地代码。
+The added trust is correspondingly small: beyond the 929-line kernel patch, each operation adds only a native emit of a few dozen lines whose output is proved equivalent to its proof sequence, whereas whole-program replacement trusts all of each program's native code without proof.
+% 相应地，增加的信任也很小：除了 929 行的内核补丁，每个操作只增加一个几十行的本地发射，其输出已被证明与证明序列等价；而整程序替换要在没有证明的情况下信任每个程序的全部本地代码。
