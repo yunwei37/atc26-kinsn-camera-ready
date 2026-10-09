@@ -86,7 +86,7 @@ On ARM64, code size explains less: the largest gains appear where the recognizer
 % 在 ARM64 上，代码大小的解释力较弱：最大的收益出现在识别器改写旋转、位提取和包字段加载的地方。
 For example, \texttt{siphash\_rotate64\_\allowbreak mixer}, whose rewritten sites mostly emit extract instructions, reaches a 1.902$\times$ speedup on ARM64, and networking microbenchmarks such as Cilium socket load balancing, BCC TCP tuple filtering, and Cilium CT/NAT tuple rewriting reach 1.691$\times$, 1.624$\times$, and 1.482$\times$.
 % 例如，改写站点大多发射提取指令的 siphash\_rotate64\_mixer 在 ARM64 上达到 1.902 倍加速；Cilium 套接字负载均衡、BCC TCP 元组过滤和 Cilium CT/NAT 元组改写等网络微基准分别达到 1.691、1.624 和 1.482 倍。
-\lang is therefore not merely a code-size optimization; its effect depends on the architecture, the original JIT's code, the operations used, and whether the rewritten sites lie on hot paths.
+\lang is therefore not merely a code-size optimization. Its effect depends on the architecture, the original JIT's code, the operations used, and whether the rewritten sites lie on hot paths.
 % 因此 \lang 不只是代码大小优化；其效果取决于架构、原版 JIT 的代码、所用的操作，以及改写站点是否位于热路径上。
 
 The regressions also show the current limits of the recognizer.
