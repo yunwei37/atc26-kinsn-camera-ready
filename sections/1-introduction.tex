@@ -117,8 +117,8 @@ Such instructions are many, since every architecture keeps adding instruction-se
 It must therefore be easy to add new \emph{operations}, such as native instructions or functions, to eBPF.
 % 因此，向 eBPF 添加新\emph{操作}（例如本地指令或函数）必须容易。
 % \note{[zhengjie:1. not coherent with the prev \& next sentence 2. similar to abstract, *new operation* is not clearly defined]}
-Adding an operation safely must meet three requirements: the existing verifier must still prove every loaded program safe, even though new operations come from untrusted code outside the verifier and the JIT; the kernel change must be small and made once rather than for every new operation; and although native code is specific to each architecture, the verifier's reasoning must remain architecture-independent.
-% 安全地添加一个操作必须满足三个要求：即使新操作来自验证器和 JIT 之外的不可信代码，现有验证器仍必须证明每个加载的程序安全；内核改动必须小，并且只做一次，而不是每增加一个操作就改一次；尽管本地代码特定于每个架构，验证器的推理必须保持与架构无关。
+Yet adding an operation safely must meet three requirements: the existing verifier must still prove every loaded program safe, even though new operations come from untrusted code outside the verifier and the JIT; the kernel change must be small and made once rather than for every new operation; and although native code is specific to each architecture, the verifier's reasoning must remain architecture-independent.
+% 然而，安全地添加一个操作必须满足三个要求：即使新操作来自验证器和 JIT 之外的不可信代码，现有验证器仍必须证明每个加载的程序安全；内核改动必须小，并且只做一次，而不是每增加一个操作就改一次；尽管本地代码特定于每个架构，验证器的推理必须保持与架构无关。
 
 We present \tool, an extension interface that lets kernel modules introduce new operations without further kernel patches or verifier changes.
 % 我们提出 \tool，一种扩展接口，让内核模块能够引入新操作，而无需再打内核补丁或修改验证器。
