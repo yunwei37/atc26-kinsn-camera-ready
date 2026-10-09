@@ -114,8 +114,8 @@ To recover these losses, we must find a way for the simple kernel JIT to emit na
 % 要追回这些损失，我们必须找到一种方法，让简单的内核 JIT 能发射指令集缺少的本地指令，同时保持 TCB 小。
 Such instructions are many, since every architecture keeps adding instruction-set extensions, and which of them pay off depends on the CPU and the workload.
 % 这样的指令很多：每个架构都在不断加入指令集扩展，而哪些扩展有收益取决于 CPU 和工作负载。
-It must therefore be easy to add new \emph{operations}, such as native instructions, to eBPF.
-% 因此，向 eBPF 添加新\emph{操作}（例如本地指令）必须容易。
+It must therefore be easy to add new \emph{operations}, such as native instructions or functions, to eBPF.
+% 因此，向 eBPF 添加新\emph{操作}（例如本地指令或函数）必须容易。
 % \note{[zhengjie:1. not coherent with the prev \& next sentence 2. similar to abstract, *new operation* is not clearly defined]}
 Adding an operation safely must meet three requirements: the existing verifier must still prove every loaded program safe, even though new operations come from untrusted code outside the verifier and the JIT; the kernel change must be small and made once rather than for every new operation; and although native code is specific to each architecture, the verifier's reasoning must remain architecture-independent.
 % 安全地添加一个操作必须满足三个要求：即使新操作来自验证器和 JIT 之外的不可信代码，现有验证器仍必须证明每个加载的程序安全；内核改动必须小，并且只做一次，而不是每增加一个操作就改一次；尽管本地代码特定于每个架构，验证器的推理必须保持与架构无关。
