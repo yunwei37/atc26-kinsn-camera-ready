@@ -172,7 +172,7 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \draw[extendedflow] (restorestep.east) -- (p4.west);
 \draw[extendedflow] (p4.east) -- (13.80,9.00);
 \draw[extendedflow] (16.00,9.00) -- (p5.west);
-\node[edgelabel,anchor=south] at (7.90,9.20) {Lower};
+\node[edgelabel,anchor=south] at (7.90,9.20) {Replace};
 \node[edgelabel,anchor=south] at (12.30,9.20) {Restore};
 \draw[callarrow] (7.70,9.00) -- (7.70,7.60);
 \draw[resultarrow] (8.10,7.60) -- (8.10,9.00);
@@ -183,7 +183,7 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \node[font=\sffamily\fontsize{8}{9}\selectfont,anchor=west,inner sep=0pt] at (.82,6.90) {Original eBPF};
 \node[font=\sffamily\fontsize{8}{9}\selectfont,anchor=west,inner sep=0pt] at (.82,6.35) {BPF-Ext};
 \begin{scope}[yshift=0cm]
-\foreach \x/\n/\stage/\representation in {0/1/Input/eBPF bytecode,3.59/2/Rewritten/eBPF + ext.\ insns,7.18/3/Lowered/eBPF bytecode,10.77/4/Restored/eBPF + ext.\ insns,14.36/5/x86-64/Native code} {
+\foreach \x/\n/\stage/\representation in {0/1/Input/eBPF bytecode,3.59/2/Rewritten/eBPF + ext.\ insns,7.18/3/Checked/eBPF bytecode,10.77/4/Restored/eBPF + ext.\ insns,14.36/5/x86-64/Native code} {
 \draw[draw=black!40,fill=white,line width=.55pt] (\x,.05) rectangle (\x+3.14,4.75);
 \node[productnumber] at (\x+.40,4.33) {\n};
 \node[panelheading] at (\x+.77,4.33) {\textbf{\stage}\\\representation};
@@ -229,7 +229,7 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \end{tikzpicture}
 \endgroup
 \caption{Original eBPF and BPF-Ext compilation paths for a 64-bit left rotation by 16. Circled numbers link the BPF-Ext path to the code panels. Module callbacks use dotted arrows for calls and thin solid arrows for returned instruction sequences. One extended instruction occupies two eBPF slots: an operand sidecar followed by a call identifying the operation (\S\ref{subsec:kernel}). The proof sequence adds a store and a load to preserve the temporary register \texttt{r6}. \texttt{fp} denotes the eBPF frame pointer; gray code provides context.}
-\Description{Orange long-dashed arrows show the original eBPF compilation path, and dark blue solid arrows show the BPF-Ext path. Both pass through the same Clang, eBPF verifier, and kernel JIT components. Circled program representations one through five lie on the solid path and match the code panels below. Representation one enters the compile-time recognizer, which returns rewritten representation two. The kernel lowers the program to representation three, verifies it, restores representation four, and generates native representation five. The dashed path bypasses these additional steps and produces separate native code. The proof sequence and native emit are adjacent within the kernel modules box. The JIT calls the native emit through an orthogonal connection.}
+\Description{Orange long-dashed arrows show the original eBPF compilation path, and dark blue solid arrows show the BPF-Ext path. Both pass through the same Clang, eBPF verifier, and kernel JIT components. Circled program representations one through five lie on the solid path and match the code panels below. Representation one enters the compile-time recognizer, which returns rewritten representation two. The kernel replaces extended instructions with proof sequences to obtain representation three, verifies it, restores the extended instructions to obtain representation four, and generates native representation five. The dashed path bypasses these additional steps and produces separate native code. The proof sequence and native emit are adjacent within the kernel modules box. The JIT calls the native emit through an orthogonal connection.}
 \label{fig:pipeline}
 \end{figure*}
 
@@ -251,22 +251,22 @@ In Figure~\ref{fig:pipeline}, it rewrites the shifts and bitwise OR of a 64-bit 
 Extended instructions are encoded with existing eBPF opcodes (\S\ref{subsec:kernel}), so \tool adds no new opcode.
 % 扩展指令用现有的 eBPF 操作码编码，因此 \tool 不添加新操作码。
 
-In the kernel, a lowering stage first substitutes each extended instruction's proof sequence, so the verifier's existing analysis sees only vanilla eBPF (\ding{174}).
-% 在内核中，降级阶段先用每条扩展指令的证明序列替换它，使验证器现有的分析只看到原生 eBPF（③）。
-Once the analysis accepts the lowered program, a restore stage reinstates the extended instructions for the JIT (\ding{175}).
-% 分析接受降级后的程序后，恢复阶段为 JIT 重新放回扩展指令（④）。
+In the kernel, each extended instruction is first replaced with its proof sequence, so the verifier's existing analysis sees only vanilla eBPF (\ding{174}).
+% 在内核中，每条扩展指令先被替换为它的证明序列，使验证器现有的分析只看到原生 eBPF（③）。
+Once the analysis accepts the program, the kernel restores the extended instructions for the JIT (\ding{175}).
+% 分析接受含证明序列的程序后，内核为 JIT 恢复扩展指令（④）。
 Proof sequences can differ across architectures when an operation compiles to a different number of extended instructions on each (\S\ref{sec:lang}), but because every variant is vanilla eBPF checked by the same analysis, verification stays architecture-independent.
 % 当一个操作在不同架构上编译为不同数量的扩展指令时，证明序列也会不同，但由于每种变体都是由同一分析检查的原生 eBPF，验证保持与架构无关。
 
-During code generation, the JIT dispatches each extended instruction to the operation's native emit for the running architecture.
-% 在代码生成时，JIT 把每条扩展指令分派给当前架构上该操作的本地发射。
+During code generation, the JIT hands each extended instruction to the operation's native emit for the running architecture.
+% 在代码生成时，JIT 把每条扩展指令交给当前架构上该操作的本地发射。
 For the rotate, it emits a single \texttt{ROL} on x86-64, here \texttt{rol r13, 16} with \texttt{r13} holding eBPF register \texttt{r7} (\ding{176}), or a single \texttt{ROR} on ARM64.
 % 对于旋转，它在 x86-64 上发射一条 ROL，这里是 rol r13, 16，r13 存放 eBPF 寄存器 r7（⑤）；在 ARM64 上发射一条 ROR。
-When an operation provides no native emit for the architecture, the extended instruction falls back to its proof sequence, which the JIT compiles as vanilla eBPF; because the interpreter has no such dispatch, a kernel without a JIT rejects programs that carry extended instructions.
-% 当操作在该架构上没有本地发射时，扩展指令回退到其证明序列，由 JIT 作为原生 eBPF 编译；由于解释器没有这种分派，没有 JIT 的内核会拒绝含扩展指令的程序。
+When an operation provides no native emit for the architecture, the extended instruction falls back to its proof sequence, which the JIT compiles as vanilla eBPF; because the interpreter cannot run native emits, a kernel without a JIT rejects programs that carry extended instructions.
+% 当操作在该架构上没有本地发射时，扩展指令回退到其证明序列，由 JIT 作为原生 eBPF 编译；由于解释器无法运行本地发射，没有 JIT 的内核会拒绝含扩展指令的程序。
 
-No stage depends on a particular operation: the kernel patch lowers, restores, and dispatches every extended instruction through one generic path (\S\ref{subsec:kernel}).
-% 没有哪个阶段依赖于特定操作：内核补丁通过一条通用路径对所有扩展指令进行降级、恢复和分派。
+No stage depends on a particular operation: the kernel patch replaces, restores, and emits every extended instruction through one generic path (\S\ref{subsec:kernel}).
+% 没有哪个阶段依赖于特定操作：内核补丁通过一条通用路径对所有扩展指令进行替换、恢复和发射。
 A new operation therefore needs only a pattern in the recognizer and one or more kernel modules that supply its proof sequence and native emits.
 % 因此新操作只需要识别器中的一个模式，以及一个或多个提供其证明序列和本地发射的内核模块。
 
@@ -278,16 +278,16 @@ Safety rests on two arguments: the verifier checks everything \tool adds except 
 % 安全性建立在两个论证之上：验证器检查 \tool 添加的除本地发射外的一切，而本地发射被证明与其证明序列计算相同的结果。
 For the first argument, \tool adds no operation-specific abstract semantics to the verifier.
 % 就第一点而言，\tool 没有给验证器添加任何特定于操作的抽象语义。
-Everything the recognizer and the kernel modules contribute reaches the verifier inside the lowered program, which the verifier re-checks on every load with the same analysis as for vanilla eBPF.
-% 识别器和模块贡献的一切都在降低后的程序内到达验证器，验证器每次加载时都用与原生 eBPF 相同的分析重新检查它。
+Everything the recognizer and the kernel modules contribute reaches the verifier inside the program it checks, which the verifier re-checks on every load with the same analysis as for vanilla eBPF.
+% 识别器和模块贡献的一切都在替换后的程序内到达验证器，验证器每次加载时都用与原生 eBPF 相同的分析重新检查它。
 A faulty rewrite or proof sequence that violates safety therefore fails verification like any unsafe program.
 % 因此违反安全的错误重写或证明序列会像任何不安全程序一样验证失败。
 Consequently, the userspace recognizer lies outside the TCB; a wrong rewrite is either rejected or yields a safe program that computes a different result.
 % 因此用户空间识别器在安全边界之外：错误的重写要么被拒绝，要么得到一个计算结果不同但安全的程序。
 
-The verifier checks the lowered program, but the JIT compiles the restored one, so what the verifier proves about the first must also hold for the second.
-% 验证器检查的是降级后的程序，而 JIT 编译的是恢复后的程序，因此验证器对前者证明的性质必须对后者同样成立。
-During restore, each \emph{proof region}, the span its proof sequence occupies, collapses back into its extended instruction, and nothing else changes.
+The verifier checks the program with proof sequences, but the JIT compiles the program with extended instructions, so what the verifier proves about the first must also hold for the second.
+% 验证器检查的是含证明序列的程序，而 JIT 编译的是含扩展指令的程序，因此验证器对前者证明的性质必须对后者同样成立。
+When the extended instructions are restored, each \emph{proof region}, the span its proof sequence occupies, collapses back into its extended instruction, and nothing else changes.
 % 恢复阶段将每个\emph{证明区域}（其证明序列占据的范围）折叠回其扩展指令，其他不变。
 For this to hold, control must enter a region only at its top and leave only past its end, like a single instruction.
 % 要做到这一点，控制流只能从区域顶部进入、只能从区域末尾之后离开，就像单条指令一样。
@@ -296,8 +296,8 @@ At load time, the kernel validates that each region has a single entry and a sin
 Using the verifier's liveness information, the kernel also checks that no instruction after a region reads a temporary register that the proof sequence overwrites, so the two forms agree on every register the program can read afterwards.
 % 内核还利用验证器的活性信息，检查区域之后没有指令读取证明序列覆盖的临时寄存器，从而两种形式在程序之后可读的每个寄存器上都一致。
 
-What remains trusted is the existing eBPF verifier and JIT, together with \tool's one-time kernel patch to them, which validates proof regions, lowers extended instructions before verification, restores them after verification, and dispatches their native emits (\S\ref{sec:implementation}).
-% 因此可信路径包括现有的 eBPF 验证器和 JIT，以及 \tool 对它们的一次性内核补丁，它验证证明区域、在验证前降低扩展指令、在验证后恢复它们、并分派它们的本地发射。
+What remains trusted is the existing eBPF verifier and JIT, together with \tool's one-time kernel patch to them, which validates proof regions, replaces extended instructions with their proof sequences before verification, restores them afterward, and calls their native emits (\S\ref{sec:implementation}).
+% 因此可信路径包括现有的 eBPF 验证器和 JIT，以及 \tool 对它们的一次性内核补丁，它验证证明区域、在验证前替换扩展指令、在验证后恢复它们、并调用它们的本地发射。
 Beyond these one-time components, only an operation's native emit escapes any check at load time.
 % 除了这些一次性组件，只有操作的本地发射在加载时不受任何检查。
 Each operation must therefore supply evidence that its native emit computes the same result as its proof sequence on every register and memory location the program can read afterwards.
