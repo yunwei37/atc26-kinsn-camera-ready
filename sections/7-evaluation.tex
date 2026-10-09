@@ -69,8 +69,8 @@ Figure~\ref{fig:eval-kinsn-micro} reports execution time.
 % 图报告了执行时间。
 On x86-64, \lang achieves a 1.242$\times$ geometric mean speedup over the original kernel JIT, reducing execution time by 19.47\%.
 % 在 x86-64 上，\lang 相对原版内核 JIT 取得 1.242 倍的几何平均加速，执行时间减少 19.47\%。
-On ARM64, \lang rewrites all 308 matched \emph{sites}, the places where the recognizer replaces an idiom with an extended instruction, and achieves a 1.222$\times$ geometric mean speedup over the 27 benchmarks, reducing execution time by 18.17\%.
-% 在 ARM64 上，\lang 改写了全部 308 个匹配的\emph{站点}（即识别器用扩展指令替换习语的位置），在 27 个基准上取得 1.222 倍的几何平均加速，执行时间减少 18.17\%。
+On ARM64, \lang rewrites all 308 matched \emph{sites}, the places where the recognizer replaces an idiom with a \lang operation, and achieves a 1.222$\times$ geometric mean speedup over the 27 benchmarks, reducing execution time by 18.17\%.
+% 在 ARM64 上，\lang 改写了全部 308 个匹配的\emph{站点}（即识别器用操作替换习语的位置），在 27 个基准上取得 1.222 倍的几何平均加速，执行时间减少 18.17\%。
 On both architectures, every benchmark produces the same output as under the original kernel JIT.
 % 在两种架构上，每个基准的输出都与原版内核 JIT 下相同。
 On x86-64, the 1.242$\times$ speedup recovers 42\% of the characterization's 1.57$\times$ gap to native code $((1.242{-}1)/(1.57{-}1))$.
@@ -86,20 +86,20 @@ On ARM64, code size explains less: the largest gains appear where the recognizer
 % 在 ARM64 上，代码大小的解释力较弱：最大的收益出现在识别器改写旋转、位提取和包字段加载的地方。
 For example, \texttt{siphash\_rotate64\_\allowbreak mixer}, whose rewritten sites mostly emit extract instructions, reaches a 1.902$\times$ speedup on ARM64, and networking microbenchmarks such as Cilium socket load balancing, BCC TCP tuple filtering, and Cilium CT/NAT tuple rewriting reach 1.691$\times$, 1.624$\times$, and 1.482$\times$.
 % 例如，改写站点大多发射提取指令的 siphash\_rotate64\_mixer 在 ARM64 上达到 1.902 倍加速；Cilium 套接字负载均衡、BCC TCP 元组过滤和 Cilium CT/NAT 元组改写等网络微基准分别达到 1.691、1.624 和 1.482 倍。
-\lang is therefore not merely a code-size optimization. Its effect depends on the architecture, the original JIT's code, the operations used, and whether the rewritten sites lie on hot paths.
+\lang is therefore not merely a code-size optimization. Its effect depends on the architecture, the original JIT's code, the \lang operations used, and whether the rewritten sites lie on hot paths.
 % 因此 \lang 不只是代码大小优化；其效果取决于架构、原版 JIT 的代码、所用的操作，以及改写站点是否位于热路径上。
 
 The regressions also show the current limits of the recognizer.
 % 性能回退也显示了识别器目前的局限。
 \texttt{bpftrace\_comm\_key\_fnv\_hash} slows to 0.862$\times$ on ARM64, and \texttt{bitmap\_popcount\_scan} slows to 0.966$\times$ even though \lang rewrites some of its sites.
 % bpftrace\_comm\_key\_fnv\_hash 在 ARM64 上降到 0.862 倍，bitmap\_popcount\_scan 尽管有站点被 \lang 改写，也降到 0.966 倍。
-These cases indicate that \lang is not uniformly beneficial and that operations should be enabled selectively, for example with a lightweight cost model, rather than at every matched site.
+These cases indicate that \lang is not uniformly beneficial and that \lang operations should be enabled selectively, for example with a lightweight cost model, rather than at every matched site.
 % 这些情况说明 \lang 并非处处有益，应当有选择地启用操作（例如借助轻量的代价模型），而不是在每个匹配站点都启用。
 
 \noindent\textbf{Load-time overhead.}
 % \noindent\textbf{加载时开销。}
-Replacing extended instructions before verification and restoring them afterward adds two linear passes over the program.
-% 在验证前替换扩展指令、验证后恢复，给程序增加两遍线性扫描。
+Replacing \lang operations with their proof sequences before verification and restoring them afterward adds two linear passes over the program.
+% 在验证前替换操作、验证后恢复，给程序增加两遍线性扫描。
 Across all 62 microbenchmarks on x86-64, the kernel's load time, which covers verification and JIT compilation, is 0.99$\times$ that of the original kernel in geometric mean, so the overhead is not measurable.
 % 在 x86-64 上的全部 62 个微基准中，内核加载时间（包括验证和 JIT 编译）的几何平均是原版内核的 0.99 倍，开销无法测出。
 For programs with \lang sites, the end-to-end compile time, including the userspace recognizer, increases by 1.4--2.4$\times$ but stays below a millisecond.
@@ -110,7 +110,7 @@ For programs with \lang sites, the end-to-end compile time, including the usersp
 \subsection{RQ2: Real Packet-Processing Applications}
 \label{subsec:corpus_application}
 
-RQ2 evaluates the same operations on production packet-processing applications.
+RQ2 evaluates the same \lang operations on production packet-processing applications.
 % RQ2 在生产环境的包处理应用上评估同样的操作。
 Microbenchmarks isolate individual instruction patterns, but packet-processing applications combine those patterns with maps, helper calls, tail calls, and application-specific datapath structure.
 % 微基准隔离了单个指令模式，而包处理应用把这些模式与 map、辅助函数调用、尾调用以及应用特有的数据路径结构结合在一起。
@@ -124,11 +124,11 @@ We measure end-to-end datapath throughput with BPF runtime statistics disabled t
 \textbf{Cilium on x86-64.}
 \note{format inconsistent}
 % \textbf{x86-64 上的 Cilium。}
-On x86-64, the full \lang policy, which enables every operation, improves Cilium's end-to-end datapath throughput by 1.074$\times$ over the original kernel JIT.
+On x86-64, the full \lang policy, which enables every \lang operation, improves Cilium's end-to-end datapath throughput by 1.074$\times$ over the original kernel JIT.
 % 在 x86-64 上，启用全部操作的完整 \lang 策略使 Cilium 的端到端数据路径吞吐量相对原版内核 JIT 提高到 1.074 倍。
 It rewrites 4086 sites, and no site is skipped at load time and no errors are reported.
 % 它改写了 4086 个站点，加载时没有站点被跳过，也没有报告错误。
-The sites span five operations: LEA accounts for 2346, byte swap for 766, bulk copy for 587, conditional select for 385, and bit extract for 2.
+The sites span five \lang operations: LEA accounts for 2346, byte swap for 766, bulk copy for 587, conditional select for 385, and bit extract for 2.
 % 这些站点涉及五种操作：LEA 2346 个，字节交换 766 个，批量拷贝 587 个，条件选择 385 个，位提取 2 个。
 \lang thus reaches real bytecode patterns in Cilium's production datapath.
 % 因此 \lang 能覆盖 Cilium 生产数据路径中的真实字节码模式。
@@ -142,7 +142,7 @@ Because a single hot XDP program dominates Katran's datapath, the result is easy
 
 Together, these two case studies show that \lang improves real packet-processing workloads on both architectures.
 % 这两个案例共同表明，\lang 在两种架构上都能提升真实的包处理工作负载。
-They also raise a question: once \lang reaches real application bytecode, should it enable every matched operation, or only the operations that pay off on the workload?
+They also raise a question: once \lang reaches real application bytecode, should it enable every matched \lang operation, or only those that pay off on the workload?
 % 它们也提出一个问题：当 \lang 作用于真实应用字节码时，应当启用每个匹配的操作，还是只启用对该工作负载有收益的操作？
 
 
@@ -157,7 +157,7 @@ RQ3 evaluates how the choice of \lang operations affects these gains.
 % RQ3 评估 \lang 操作的选择如何影响这些收益。
 Which \lang operations to enable is a policy decision above \tool, and a performance one: each rewritten site trades the work that a shorter native sequence saves against its cost and its placement in a particular datapath.
 % 启用哪些 \lang 操作是位于 \tool 之上的策略决定，也是性能决定：每个改写站点都要在更短的本地序列节省的工作与其代价及其在特定数据路径中的位置之间权衡。
-A simple policy maximizes coverage, enabling every implemented operation and rewriting as many sites as possible.
+A simple policy maximizes coverage, enabling every implemented \lang operation and rewriting as many sites as possible.
 % 一种简单的策略是最大化覆盖：启用所有已实现的操作，改写尽可能多的站点。
 Figure~\ref{fig:app_policy_probes} tests this policy by changing it in two ways on Cilium and Katran.
 % 图通过在 Cilium 和 Katran 上以两种方式改变该策略来检验它。
@@ -166,27 +166,27 @@ Figure~\ref{fig:app_policy_probes} tests this policy by changing it in two ways 
 
 For Cilium, we start from the full x86-64 policy used in RQ2, which rewrites 4086 sites, improves throughput to 1.074$\times$, and leaves BPF cost nearly unchanged at 1.010$\times$ (Figure~\ref{fig:app_policy_probes}).
 % 对于 Cilium，我们从 RQ2 使用的完整 x86-64 策略出发：它改写 4086 个站点，吞吐量提高到 1.074 倍，BPF 成本几乎不变，为 1.010 倍。
-Disabling only the bulk copy operation reduces the rewritten sites to 3512 but raises throughput further to 1.119$\times$.
+Disabling only the \lang bulk copy reduces the rewritten sites to 3512 but raises throughput further to 1.119$\times$.
 % 只禁用批量拷贝操作后，改写站点减少到 3512 个，吞吐量却进一步提高到 1.119 倍。
 BPF cost also rises, to 1.062$\times$, so the result does not mean that bulk copy is harmful in general.
 % BPF 成本也上升到 1.062 倍，所以这一结果并不意味着批量拷贝总是有害。
-Rather, an additional operation can increase the number of rewritten sites without improving the measured datapath: the saved instructions may not outweigh the overhead of the replacement, or they may not lie on the part of the datapath that dominates throughput.
+Rather, an additional \lang operation can increase the number of rewritten sites without improving the measured datapath: the saved instructions may not outweigh the overhead of the replacement, or they may not lie on the part of the datapath that dominates throughput.
 % 它说明的是，多启用一个操作可以增加改写站点的数量，却不一定改善所测的数据路径：节省的指令可能抵不上替换的开销，或者不在决定吞吐量的那部分数据路径上。
 
 Katran shows the same lesson more directly.
 % Katran 更直接地体现了同样的结论。
 The conservative ARM64 policy used in RQ2 rewrites 21 sites, improves throughput to 1.065$\times$, and reduces BPF cost to 0.941$\times$.
 % RQ2 使用的保守 ARM64 策略改写 21 个站点，吞吐量提高到 1.065 倍，BPF 成本降到 0.941 倍。
-A policy that enables every implemented ARM64 operation rewrites 62 sites, yet throughput falls to 0.984$\times$ and BPF cost rises to 1.006$\times$.
+A policy that enables every \lang operation implemented on ARM64 rewrites 62 sites, yet throughput falls to 0.984$\times$ and BPF cost rises to 1.006$\times$.
 % 启用所有已实现 ARM64 操作的策略改写 62 个站点，但吞吐量降到 0.984 倍，BPF 成本升到 1.006 倍。
 Because a single hot XDP path dominates Katran, this is a clear counterexample to maximizing coverage: more rewritten sites bring neither higher throughput nor lower BPF cost.
 % 由于 Katran 由单条热 XDP 路径主导，这是最大化覆盖的一个清晰反例：改写更多站点既没有带来更高的吞吐量，也没有带来更低的 BPF 成本。
 
 Together, the two cases show that the number of rewritten sites is the wrong objective for a \lang policy.
 % 两个案例共同表明，改写站点的数量不是 \lang 策略的正确目标。
-An operation should be enabled when its rewrites save enough work on the target workload to justify their cost.
+A \lang operation should be enabled when its rewrites save enough work on the target workload to justify their cost.
 % 只有当一个操作的改写在目标工作负载上节省的工作足以抵消其代价时，才应启用它。
-We currently choose policies by an automatic search that enables each combination of operations, measures it on the workload, and keeps the best.
+We currently choose policies by an automatic search that enables each combination of \lang operations, measures it on the workload, and keeps the best.
 % 目前我们用自动搜索选择策略：启用每一种操作组合，在工作负载上测量，保留最好的一个。
 The search is needed because the number of rewritten sites cannot predict how often each site runs or how rewrites interact.
 % 之所以需要搜索，是因为改写站点的数量无法预测每个站点执行得多频繁，也无法预测多个改写之间如何相互影响。
@@ -237,11 +237,11 @@ In-kernel native execution is the fastest but trusts the native code of whole pr
 % 内核内本地执行最快，但要信任整个程序的本地代码以及加载它的路径。
 \lang lies in between: its 1.074$\times$ Cilium throughput gain recovers 5.4\% of the gap to the 2.358$\times$ upper bound $((1.074{-}1)/(2.358{-}1))$, compared with 42\% on the microbenchmarks, because real datapaths spend most of their time in helpers, maps, and tail calls that \lang does not target.
 % \lang 介于两者之间：它在 Cilium 上 1.074 倍的吞吐量提升追回了与 2.358 倍上界之间差距的 5.4\%，而在微基准上是 42\%，因为真实数据路径的大部分时间花在 \lang 不针对的辅助函数、map 和尾调用上。
-\lang does not reach the upper bound, but it speeds up programs through a small set of kernel-defined operations rather than trusting the native code of whole programs.
+\lang does not reach the upper bound, but it speeds up programs through a small set of \lang operations rather than trusting the native code of whole programs.
 % \lang 达不到上界，但它通过一小组由内核定义的操作来加速程序，而不必信任整个程序的本地代码。
 The added trust is correspondingly small.
 % 相应地，增加的信任也很小。
 Proving whole-program native code equivalent to its bytecode amounts to verifying an optimizing compiler's output for an entire program, which remains impractical, so whole-program replacement must trust that code without proof.
 % 证明整个程序的本地代码与其字节码等价，相当于验证优化编译器对整个程序的输出，目前仍不现实，因此整程序替换只能在没有证明的情况下信任这些代码。
-An operation's native code, in contrast, is one or two machine instructions, and two lemmas prove it equivalent to its proof sequence (\S\ref{sec:formal-verification}).
+A \lang operation's native code, in contrast, is one or two machine instructions, and two lemmas prove it equivalent to its proof sequence (\S\ref{sec:formal-verification}).
 % 相比之下，一个操作的本地代码只有一两条机器指令，两个引理就能证明它与证明序列等价。
