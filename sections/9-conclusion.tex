@@ -20,8 +20,8 @@ We presented \tool, an extension interface that extends the eBPF compilation pip
 % 我们提出了 \tool，一种通过内核 JIT 直接发射的新操作扩展 eBPF 编译管线的扩展接口。
 Each operation has a proof sequence that the existing verifier checks on every load and a native emit that the CPU runs.
 % 每个操作有一个现有验证器在每次加载时检查的证明序列和一个 CPU 运行的本地发射。
-Beyond the one-time kernel patch, the native emit is the only per-operation addition to the TCB.
-% 除了一次性的内核补丁外，本地发射是每个操作对 TCB 的唯一增加。
+Beyond the one-time kernel patch, the native emit is the only code each operation adds to the TCB.
+% 除了一次性的内核补丁外，本地发射是每个操作加入 TCB 的唯一代码。
 With \tool, we built \lang, a set of seven hardware-idiom operations.
 % 借助 \tool，我们构建了 \lang，一组七个硬件习语操作。
 Lean 4 proofs show that each \lang native emit computes the same result as its proof sequence.

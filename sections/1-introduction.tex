@@ -149,15 +149,15 @@ On microbenchmarks, \lang speeds up eBPF programs by 24\% on x86-64 and 22\% on 
 % 在微基准测试上，\lang 相对未修改的管线使 eBPF 在 x86-64 上几何平均提速 24\%，在 ARM64 上提速 22\%，恢复了 x86-64 上与本地代码差距的 42\%，并使本地代码缩小 12--23\%。
 On production applications, it improves throughput by up to 12\%; the gains are smaller because a real datapath spends most of its time in helper calls, map accesses, and tail calls, which instruction selection cannot reach (\S\ref{sec:eval}).
 % 在生产应用上，它使吞吐量提高达 12\%；收益较小是因为真实数据通路的大部分时间花在 helper 调用、map 访问和尾调用上，这些是指令选择无法触及的。
-The same interface also supports whole-program native replacement, which reaches 2.358$\times$ on Cilium when the application's entire native code is trusted and thus bounds what a larger TCB can buy (\S\ref{subsec:native_upper_bound}).
+The same interface also supports replacing whole programs with native code, which reaches 2.358$\times$ on Cilium when the application's entire native code is trusted and thus bounds what a larger TCB can buy (\S\ref{subsec:native_upper_bound}).
 % 同样的接口还支持整个程序的本地替换，在信任应用全部本地代码时在 Cilium 上达到 2.358 倍，从而给出了更大 TCB 所能换来的性能上限。
 
 \noindent\textbf{Contributions.}
 We make the following contributions:
 \begin{itemize}
-    \item We characterize the eBPF-native performance gap and attribute it to the kernel JIT's per-opcode code generation, with the clearest losses from hardware idioms (\S\ref{sec:characterization}).
+    \item We characterize the performance gap between eBPF and native code and attribute it to the kernel JIT's per-opcode code generation, with the clearest losses from hardware idioms (\S\ref{sec:characterization}).
     \item We present \tool, an extension interface that adds new operations to the eBPF compilation pipeline while reusing the existing verifier for safety (\S\ref{sec:mechanism}).
     \item Using \tool, we build \lang, a set of seven hardware-idiom operations that the simple kernel JIT emits directly (\S\ref{sec:lang}).
     \item We prove in Lean 4 that each \lang native emit computes the same result as its proof sequence, extending the verifier's guarantee to the native code (\S\ref{sec:formal-verification}).
-    \item Our implementation in the Linux kernel and userspace tooling (\S\ref{sec:implementation}) recovers 42\% of the x86-64 eBPF-native gap (\S\ref{sec:eval}).
+    \item Our implementation in the Linux kernel and userspace tooling (\S\ref{sec:implementation}) recovers 42\% of the x86-64 gap to native code (\S\ref{sec:eval}).
 \end{itemize}
