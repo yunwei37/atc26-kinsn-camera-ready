@@ -5,7 +5,7 @@
 This section evaluates \lang, the hardware-idiom instantiation of \tool.
 % 本节评估 \lang，\tool 的硬件习语实例。
 \tool provides the extension interface, while \lang provides the concrete operations used in our experiments.
-% \tool 提供扩展机制，而 \lang 提供我们实验中使用的具体描述符族。
+% \tool 提供扩展接口，而 \lang 提供我们实验中使用的具体操作。
 \lang complements bytecode optimizers~\cite{xu2021synthesizing,mao2024merlin,zhu2025epso}, which cannot emit native instructions that the eBPF instruction set lacks.
 % \lang 与字节码优化器互补，后者无法发射 eBPF 指令集缺少的本地指令。
 We use two workload classes.
@@ -33,8 +33,8 @@ We answer four questions:
 
 We use two evaluation platforms.
 % 我们使用两个评估平台。
-The x86-64 experiments run in a KVM virtual machine with 8 vCPUs and 64\,GB RAM on an Intel Xeon Silver 4210R @ 2.40\,GHz host, using Linux 7.0.0-rc2+.
-% x86-64 实验在 Intel Xeon Silver 4210R @ 2.40 GHz 主机上的 KVM 虚拟机中运行，配置 8 个 vCPU 和 64 GB RAM，使用 Linux 7.0.0-rc2+。
+The x86-64 experiments run in a KVM virtual machine with 8 vCPUs and 64\,GB RAM on an Intel Core Ultra 9 285K host, using Linux 7.0.0-rc2+.
+% x86-64 实验在 Intel Core Ultra 9 285K 主机上的 KVM 虚拟机中运行，配置 8 个 vCPU 和 64 GB RAM，使用 Linux 7.0.0-rc2+。
 The ARM64 experiments run on an AWS t4g.small instance (2 vCPUs, 2\,GiB RAM, AWS Graviton2), using a \lang-enabled Linux 7.0.0-rc2+ build.
 % ARM64 实验在 AWS t4g.small 实例（2 个 vCPU，2 GiB RAM，AWS Graviton2）上运行，使用启用 \lang 的 Linux 7.0.0-rc2+ 构建。
 These platforms cover both the microbenchmark suite and the production-application experiments.
@@ -60,6 +60,8 @@ We compute it from the kernel's per-program runtime statistics as the change in 
 
 \input{figures/sec-6-kinsn-micro-rq1}
 
+RQ1 evaluates how much \lang's hardware-idiom operations speed up the microbenchmarks.
+% RQ1 评估 \lang 的硬件习语操作使微基准加速多少。
 \lang reduces the size of the code the kernel JIT generates on both architectures: relative to the original kernel JIT, the code shrinks to 0.772$\times$ on x86-64 and 0.879$\times$ on ARM64, geometric mean reductions of 22.8\% and 12.1\%.
 % \lang 在两种架构上都减小了内核 JIT 生成的代码：相对原版内核 JIT，代码在 x86-64 上缩小到 0.772 倍，在 ARM64 上缩小到 0.879 倍，几何平均分别减少 22.8\% 和 12.1\%。
 
@@ -108,6 +110,8 @@ For programs with \lang sites, the end-to-end compile time, including the usersp
 \subsection{RQ2: Real Packet-Processing Applications}
 \label{subsec:corpus_application}
 
+RQ2 evaluates the same operations on production packet-processing applications.
+% RQ2 在生产环境的包处理应用上评估同样的操作。
 Microbenchmarks isolate individual instruction patterns, but packet-processing applications combine those patterns with maps, helper calls, tail calls, and application-specific datapath structure.
 % 微基准隔离了单个指令模式，而包处理应用把这些模式与 map、辅助函数调用、尾调用以及应用特有的数据路径结构结合在一起。
 We therefore evaluate \lang on two real eBPF packet-processing applications: Cilium and Katran.
@@ -130,8 +134,8 @@ The sites span five operations: LEA accounts for 2346, byte swap for 766, bulk c
 
 \textbf{Katran on ARM64.}
 % \textbf{ARM64 上的 Katran。}
-On ARM64, a conservative \lang policy rewrites 21 sites and improves Katran's end-to-end throughput by 1.073$\times$ over the original kernel JIT.
-% 在 ARM64 上，一个保守的 \lang 策略改写 21 个站点，使 Katran 的端到端吞吐量相对原版内核 JIT 提高到 1.073 倍。
+On ARM64, a conservative \lang policy rewrites 21 sites and improves Katran's end-to-end throughput by 1.065$\times$ over the original kernel JIT.
+% 在 ARM64 上，一个保守的 \lang 策略改写 21 个站点，使 Katran 的端到端吞吐量相对原版内核 JIT 提高到 1.065 倍。
 Because a single hot XDP program dominates Katran's datapath, the result is easy to attribute: the program that \lang rewrites is the one on the critical path.
 % 由于 Katran 的数据路径由单个热 XDP 程序主导，结果很容易归因：被 \lang 改写的程序正是关键路径上的程序。
 
@@ -148,6 +152,8 @@ They also raise a question: once \lang reaches real application bytecode, should
 \label{subsec:policy_sensitivity}
 
 
+RQ3 evaluates how the choice of \lang operations affects these gains.
+% RQ3 评估 \lang 操作的选择如何影响这些收益。
 Which \lang operations to enable is a policy decision above \tool, and a performance one: each rewritten site trades the work that a shorter native sequence saves against its cost and its placement in a particular datapath.
 % 启用哪些 \lang 操作是位于 \tool 之上的策略决定，也是性能决定：每个改写站点都要在更短的本地序列节省的工作与其代价及其在特定数据路径中的位置之间权衡。
 A simple policy maximizes coverage, enabling every implemented operation and rewriting as many sites as possible.
@@ -159,8 +165,8 @@ Figure~\ref{fig:app_policy_probes} tests this policy by changing it in two ways 
 
 For Cilium, we start from the full x86-64 policy used in RQ2, which rewrites 4086 sites, improves throughput to 1.074$\times$, and leaves BPF cost nearly unchanged at 1.009$\times$ (Figure~\ref{fig:app_policy_probes}).
 % 对于 Cilium，我们从 RQ2 使用的完整 x86-64 策略出发：它改写 4086 个站点，吞吐量提高到 1.074 倍，BPF 成本几乎不变，为 1.009 倍。
-Disabling only the bulk copy operation reduces the rewritten sites to 3512 but raises throughput further to 1.114$\times$.
-% 只禁用批量拷贝操作后，改写站点减少到 3512 个，吞吐量却进一步提高到 1.114 倍。
+Disabling only the bulk copy operation reduces the rewritten sites to 3512 but raises throughput further to 1.119$\times$.
+% 只禁用批量拷贝操作后，改写站点减少到 3512 个，吞吐量却进一步提高到 1.119 倍。
 BPF cost also rises, to 1.062$\times$, so the result does not mean that bulk copy is harmful in general.
 % BPF 成本也上升到 1.062 倍，所以这一结果并不意味着批量拷贝总是有害。
 Rather, an additional operation can increase the number of rewritten sites without improving the measured datapath: the saved instructions may not outweigh the overhead of the replacement, or they may not lie on the part of the datapath that dominates throughput.
@@ -168,10 +174,10 @@ Rather, an additional operation can increase the number of rewritten sites witho
 
 Katran shows the same lesson more directly.
 % Katran 更直接地体现了同样的结论。
-The conservative ARM64 policy used in RQ2 rewrites 21 sites, improves throughput to 1.073$\times$, and reduces BPF cost to 0.941$\times$.
-% RQ2 使用的保守 ARM64 策略改写 21 个站点，吞吐量提高到 1.073 倍，BPF 成本降到 0.941 倍。
-A policy that enables every implemented ARM64 operation rewrites 62 sites, yet throughput falls to 0.995$\times$ and BPF cost rises to 1.006$\times$.
-% 启用所有已实现 ARM64 操作的策略改写 62 个站点，但吞吐量降到 0.995 倍，BPF 成本升到 1.006 倍。
+The conservative ARM64 policy used in RQ2 rewrites 21 sites, improves throughput to 1.065$\times$, and reduces BPF cost to 0.941$\times$.
+% RQ2 使用的保守 ARM64 策略改写 21 个站点，吞吐量提高到 1.065 倍，BPF 成本降到 0.941 倍。
+A policy that enables every implemented ARM64 operation rewrites 62 sites, yet throughput falls to 0.984$\times$ and BPF cost rises to 1.006$\times$.
+% 启用所有已实现 ARM64 操作的策略改写 62 个站点，但吞吐量降到 0.984 倍，BPF 成本升到 1.006 倍。
 Because a single hot XDP path dominates Katran, this is a clear counterexample to maximizing coverage: more rewritten sites bring neither higher throughput nor lower BPF cost.
 % 由于 Katran 由单条热 XDP 路径主导，这是最大化覆盖的一个清晰反例：改写更多站点既没有带来更高的吞吐量，也没有带来更低的 BPF 成本。
 
@@ -179,19 +185,23 @@ Together, the two cases show that the number of rewritten sites is the wrong obj
 % 两个案例共同表明，改写站点的数量不是 \lang 策略的正确目标。
 An operation should be enabled when its rewrites save enough work on the target workload to justify their cost.
 % 只有当一个操作的改写在目标工作负载上节省的工作足以抵消其代价时，才应启用它。
+We currently choose policies by automatically searching over combinations of operations, measuring each combination on the workload, and keeping the best.
+% 目前我们通过自动搜索操作组合来选择策略：在工作负载上测量每个组合，保留最好的一个。
+Such a search must be repeated for every workload and processor, and its cost grows with the number of combinations, because the number of rewritten sites alone cannot predict how often each site runs or how rewrites interact.
+% 这种搜索必须对每个工作负载和处理器重复进行，其代价随组合数量增长，因为仅凭改写站点的数量无法预测每个站点执行得多频繁，也无法预测多个改写之间如何相互影响。
+A cost model that combines program profiles with processor information could replace most of these measurements, which we leave to future work.
+% 结合程序剖析和处理器信息的代价模型可以取代大部分这类测量，我们将其留作未来工作。
 
 
 \subsection{RQ4: In-Kernel Native Upper Bound}
 \label{subsec:native_upper_bound}
 
-The three RQs above evaluate \lang as an instantiation of \tool.
-% 上面三个 RQ 评估的是作为 \tool 实例的 \lang。
-We now place \tool in a broader design space by using \tool itself to replace whole programs with native code.
-% 现在我们用 \tool 本身把整个程序替换为本地代码，把 \tool 放到更大的设计空间中考察。
+Unlike RQ1--RQ3, which evaluate \lang's operations, RQ4 uses \tool itself to replace whole Cilium programs with native code, placing \tool in a broader design space.
+% 与评估 \lang 操作的 RQ1--RQ3 不同，RQ4 用 \tool 本身把整个 Cilium 程序替换为本地代码，把 \tool 放到更大的设计空间中考察。
 In this experiment, each Cilium BPF program is compiled from the same C source along two paths: the proof sequence is the normal eBPF bytecode that the verifier checks, while the native emit is the same source compiled with LLVM \texttt{-O2} directly to native code.
 % 在这个实验中，每个 Cilium BPF 程序从同一份 C 源码沿两条路径编译：证明序列是验证器检查的普通 eBPF 字节码，本地发射是用 LLVM -O2 把同一源码直接编译成的本地代码。
-The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code becomes part of the TCB.
-% 验证器仍在每次加载时检查 eBPF 证明序列，但两种编译结果之间的等价性是被信任的而非被证明的，因此应用的本地代码成为 TCB 的一部分。
+The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code and the path that loads it become part of the TCB.
+% 验证器仍在每次加载时检查 eBPF 证明序列，但两种编译结果之间的等价性是被信任的而非被证明的，因此应用的本地代码及加载它的路径成为 TCB 的一部分。
 The 2.358$\times$ upper bound is not comparable to the characterization's 1.57$\times$ microbenchmark gap, which measures microbenchmarks in isolation rather than Cilium's full datapath.
 % 2.358 倍的上界不能与特征分析中 1.57 倍的微基准差距直接比较，后者测的是孤立的微基准，而不是 Cilium 的完整数据路径。
 
