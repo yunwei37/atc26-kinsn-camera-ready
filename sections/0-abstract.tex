@@ -27,8 +27,8 @@ eBPF safely extends OS kernels in production by verifying bytecode before execut
 % eBPF 通过在执行前验证字节码，在生产中安全地扩展操作系统内核，其许多用途对性能要求很高。
 However, its design favors safety over speed: the instruction set is designed to be verifiable, and the kernel just-in-time compiler (JIT) stays simple to remain trustworthy, translating one opcode at a time.
 % 然而其设计偏重安全而非速度：指令集为可验证而设计，内核即时编译器（JIT）保持简单以维持可信，一次只翻译一个操作码。
-As a result, eBPF runs up to twice as slow as native code, and the clearest losses come from hardware idioms, operations that CPUs execute as a single instruction but eBPF lacks.
-% 因此，eBPF 运行速度比本地代码慢达两倍，最明显的损失来自硬件习语，即 CPU 以单条指令执行、但 eBPF 缺少的操作。
+As a result, eBPF takes up to twice as long to run as native code, and the clearest losses come from hardware idioms, operations that CPUs execute as a single instruction but eBPF lacks.
+% 因此，eBPF 的运行时间最多是本地代码的两倍，最明显的损失来自硬件习语，即 CPU 以单条指令执行、但 eBPF 缺少的操作。
 Current approaches like optimizing the bytecode cannot emit these instructions, and adding them to the eBPF instruction set requires changing the compiler, the verifier, and the JIT for each architecture.
 % 现有方案（如优化字节码）无法发射这些指令，而把它们加入指令集需要修改编译器、验证器和每个架构的 JIT。
 Optimizing in the JIT instead enlarges the trusted computing base (TCB).
