@@ -133,8 +133,8 @@ A compile-time recognizer rewrites programs to use the new operations, and the v
 % 编译时识别器重写程序以使用新操作，验证器在每次加载时重新检查证明序列。
 Neither the recognizer nor the proof sequences are part of the TCB, so a recognizer bug cannot make a verified program unsafe.
 % 识别器和证明序列都不属于 TCB，因此识别器的错误不会使已验证的程序变得不安全。
-Since the verifier never sees the native emit, the native emit is the only per-operation addition to the TCB.
-% 由于验证器从未看到本地发射，本地发射是每个操作对 TCB 的唯一增加。
+Since the verifier never sees the native emit, the native emit is the only code each operation adds to the TCB.
+% 由于验证器从未看到本地发射，本地发射是每个操作加入 TCB 的唯一代码。
 We therefore prove in Lean 4 that, for each operation, the native emit computes the same result as its proof sequence, which extends the verifier's guarantee to the native code.
 % \note{what is this trust gap?}
 % 因此我们在 Lean 4 中证明，对于每个操作，本地发射与其证明序列计算相同的结果，从而将验证器的保证延伸到本地代码。
