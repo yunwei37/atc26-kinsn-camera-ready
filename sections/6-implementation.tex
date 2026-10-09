@@ -107,6 +107,8 @@ Each operation ships as one or more loadable kernel modules (\S\ref{subsec:descr
 
 The kernel patch adds 929 lines to the Linux kernel, broken down by component in Table~\ref{tab:kernel-loc}.
 % 内核补丁向 Linux 内核添加了 929 行，表按组件分解了总数。
+All of it is glue around the existing verifier and JIT: it leaves the verifier's analysis and the JIT's translation of ordinary instructions unchanged.
+% 这些代码全部是现有验证器和 JIT 外围的胶水代码：验证器的分析和 JIT 对普通指令的翻译都保持不变。
 Each extended instruction is a pair of instructions, a sidecar followed by a call.
 % 每条扩展指令是一对指令：一个伴随，后面跟一个调用，如表所示。
 Both reuse existing eBPF opcodes, and a reserved \texttt{src\_reg} value marks the pair for \tool.

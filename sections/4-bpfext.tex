@@ -256,8 +256,8 @@ In the kernel, each extended instruction is first replaced with its proof sequen
 % 在内核中，每条扩展指令先被替换为它的证明序列，使验证器现有的分析只看到原生 eBPF（③）。
 Once the analysis accepts the program, the kernel restores the extended instructions for the JIT (\ding{175}).
 % 分析接受含证明序列的程序后，内核为 JIT 恢复扩展指令（④）。
-It restores them right after the analysis, so the steps that follow verification and prepare the program for the JIT handle each extended instruction as an ordinary instruction in existing opcodes. Neither the analysis nor these steps change.
-% 内核在分析结束后立即恢复它们，这样验证之后、为 JIT 准备程序的那些步骤会把每条扩展指令当作使用现有操作码的普通指令处理；分析和这些步骤都无需改动。
+It restores them right after the analysis, so the steps that follow verification and prepare the program for the JIT handle each extended instruction as an ordinary instruction in existing opcodes.
+% 内核在分析结束后立即恢复它们，这样验证之后、为 JIT 准备程序的那些步骤会把每条扩展指令当作使用现有操作码的普通指令处理。
 Proof sequences can differ across architectures when an operation compiles to a different number of extended instructions on each (\S\ref{sec:lang}), but because every variant is vanilla eBPF checked by the same analysis, verification stays architecture-independent.
 % 当一个操作在不同架构上编译为不同数量的扩展指令时，证明序列也会不同，但由于每种变体都是由同一分析检查的原生 eBPF，验证保持与架构无关。
 
@@ -268,8 +268,8 @@ For the rotate, it emits a single \texttt{ROL} on x86-64, here \texttt{rol r13, 
 When an operation has no native code for the architecture, the extended instruction falls back to its proof sequence, which the JIT compiles as vanilla eBPF. Because the interpreter cannot run native code, a kernel without a JIT rejects programs that carry extended instructions.
 % 当操作在该架构上没有本地代码时，扩展指令回退到其证明序列，由 JIT 作为原生 eBPF 编译；由于解释器无法运行本地代码，没有 JIT 的内核会拒绝含扩展指令的程序。
 
-No stage depends on a particular operation: the kernel patch replaces, restores, and emits every extended instruction through one generic path (\S\ref{subsec:kernel}).
-% 没有哪个阶段依赖于特定操作：内核补丁通过一条通用路径对所有扩展指令进行替换、恢复和发射。
+No stage depends on a particular operation: the kernel patch replaces, restores, and emits every extended instruction through one generic path (\S\ref{subsec:kernel}), and it changes neither the verifier's analysis nor how the JIT translates ordinary instructions.
+% 没有哪个阶段依赖于特定操作：内核补丁通过一条通用路径对所有扩展指令进行替换、恢复和发射，并且既不改变验证器的分析，也不改变 JIT 对普通指令的翻译。
 A new operation therefore needs only a pattern in the recognizer and one or more kernel modules that supply its proof sequence and native code.
 % 因此新操作只需要识别器中的一个模式，以及一个或多个提供其证明序列和本地代码的内核模块。
 
@@ -329,13 +329,17 @@ Because both results equal the specification, the destination registers agree, a
 Each \lang operation is proved the same way.
 % 每个 \lang 操作都以同样的方式证明。
 
-Neither instruction set is translated into the other. Both are modeled in one Lean development and meet only in the specification.
-% 两套指令集之间没有相互翻译：两者在同一个 Lean 开发中建模，只在规范处相遇。
-Trust in the proofs thus rests on the instruction models and Lean itself. The specification need not be trusted, since the lemmas give equality whatever it says.
-% 因此，需要信任的只是指令模型和 Lean 本身；规范无需信任，因为无论规范是什么，引理都给出相等。
+The proofs trust only the instruction models and Lean itself.
+% 这些证明只信任指令模型和 Lean 本身。
+Neither instruction set is translated into the other. Both are modeled in one Lean development and meet only in the specification, which need not be trusted, since the lemmas give equality whatever it says.
+% 两套指令集之间没有相互翻译，它们在同一个 Lean 开发中建模，只在规范处相遇；规范无需信任，因为无论规范是什么，引理都给出相等。
 That the kernel writes exactly the modeled instructions is checked separately (\S\ref{subsec:descriptors}).
 % 内核是否恰好写出所建模的指令另行检查。
+An operation's developers check its proofs once, and those who deploy it trust its module as they would any other kernel module.
+% 操作的开发者只需检查一次证明，部署者则像信任其他内核模块一样信任该模块。
 
+The proofs extend to new architectures and operations with little new work.
+% 这些证明可以以很少的额外工作扩展到新架构和新操作。
 Supporting a new architecture needs a model of its native instructions and proofs that its native code computes the existing specifications. The lemmas for existing proof sequences carry over unchanged.
 % 支持新架构需要其本地指令的模型，以及证明其本地代码计算现有规范；已有证明序列的引理保持不变地复用。
 The instruction models and register-preservation lemmas are shared across operations, so a new operation on an existing architecture needs only its specification and its two lemmas.
@@ -362,10 +366,8 @@ Six of the seven operations replace fixed bytecode patterns that the recognizer 
 Only the prefetch has no eBPF equivalent, so the recognizer inserts it at sites it selects, with a no-op proof sequence.
 % 只有预取没有等价的 eBPF 代码，因此识别器在其选择的位置插入它，使用空操作证明序列。
 
-Table~\ref{tab:descriptors} lists the seven operations, each with its proof sequence and its native code on x86-64 and ARM64.
-% 表列出了七个操作，每个都有其证明序列及其在 x86-64 和 ARM64 上的本地代码。
-Native code differs across architectures in shape and in availability.
-% 本地代码在架构间的形状和可用性上有所不同。
+Native code differs across architectures in shape and in availability, as Table~\ref{tab:descriptors} shows for the seven operations on x86-64 and ARM64.
+% 本地代码在架构间的形状和可用性上有所不同，表展示了七个操作在 x86-64 和 ARM64 上的情况。
 A conditional select compiles to one extended instruction on x86-64, emitting the \texttt{CMP+CMOV} pair, and to two extended instructions on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
 % 条件选择在 x86-64 上编译为一条扩展指令，发射 CMP+CMOV 对，在 ARM64 上编译为两条扩展指令，一条发射 TST，一条发射 CSEL，因此识别器针对程序将要加载的架构进行重写。
 On ARM64, the byte swap of a loaded value splits the same way, into an \texttt{LDR} and a \texttt{REV}.
