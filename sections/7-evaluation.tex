@@ -238,5 +238,9 @@ In-kernel native execution is the fastest but trusts the native code of whole pr
 % \lang 介于两者之间：它在 Cilium 上 1.074 倍的吞吐量提升追回了与 2.358 倍上界之间差距的 5.4\%，而在微基准上是 42\%，因为真实数据路径的大部分时间花在 \lang 不针对的辅助函数、map 和尾调用上。
 \lang does not reach the upper bound, but it speeds up programs through a small set of kernel-defined operations rather than trusting the native code of whole programs.
 % \lang 达不到上界，但它通过一小组由内核定义的操作来加速程序，而不必信任整个程序的本地代码。
-The added trust is correspondingly small: beyond the 929-line kernel patch, each operation adds only a native emit of a few dozen lines whose output is proved equivalent to its proof sequence, whereas whole-program replacement trusts all of each program's native code without proof.
-% 相应地，增加的信任也很小：除了 929 行的内核补丁，每个操作只增加一个几十行的本地发射，其输出已被证明与证明序列等价；而整程序替换要在没有证明的情况下信任每个程序的全部本地代码。
+The added trust is correspondingly small.
+% 相应地，增加的信任也很小。
+Proving whole-program native code equivalent to its bytecode amounts to verifying an optimizing compiler's output for an entire program, which remains impractical, so whole-program replacement must trust that code without proof.
+% 证明整个程序的本地代码与其字节码等价，相当于验证优化编译器对整个程序的输出，目前仍不现实，因此整程序替换只能在没有证明的情况下信任这些代码。
+An operation's native emit, in contrast, writes one or two machine instructions, and two lemmas prove it equivalent to its proof sequence (\S\ref{sec:formal-verification}).
+% 相比之下，一个操作的本地发射只写出一两条机器指令，两个引理就能证明它与证明序列等价。
