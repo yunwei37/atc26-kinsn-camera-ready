@@ -96,10 +96,12 @@ Second, adding an operation must not require rewriting the verifier or the JIT, 
 Third, one operation may map to a different native instruction on each architecture, while its verification stays architecture-independent (\S\ref{subsec:pipeline}).
 % 第三，一个操作可以在每个架构上映射到不同的本地指令，而对它的验证保持与架构无关。
 
-To meet them, \tool extends the eBPF compilation pipeline with new operations that the existing verifier checks and the kernel JIT emits directly (\S\ref{subsec:pipeline}).
-% 为满足这些要求，\tool 用新操作扩展 eBPF 编译管线：现有验证器检查这些操作，内核 JIT 直接发射它们。
-\S\ref{subsec:safety} argues that the extended pipeline keeps eBPF safe, and \S\ref{sec:lang} presents \lang, a set of seven operations for hardware idioms.
-% \S\ref{subsec:safety} 论证扩展后的管线仍保持 eBPF 的安全性，\S\ref{sec:lang} 介绍 \lang，一组七个硬件习语操作。
+To meet them, \tool gives each new operation a form in vanilla eBPF for the verifier and native code for the CPU.
+% 为满足这些要求，\tool 为每个新操作提供给验证器的原生 eBPF 形式，以及给 CPU 运行的本地代码。
+\tool has three parts: a compile-time recognizer in userspace that rewrites programs to use new operations, kernel modules that supply each operation's two forms, and a one-time kernel patch that connects both to the verifier and the JIT.
+% \tool 由三部分组成：用户空间的编译时识别器，把程序改写为使用新操作；内核模块，提供每个操作的两种形式；一次性内核补丁，把两者接到验证器和 JIT 上。
+\S\ref{subsec:pipeline} follows an operation through the pipeline, \S\ref{sec:lang} presents \lang, a set of seven operations for hardware idioms, and \S\ref{subsec:safety} argues that the extended pipeline keeps eBPF safe.
+% \S\ref{subsec:pipeline} 跟随一个操作走完管线，\S\ref{sec:lang} 介绍 \lang（一组七个硬件习语操作），\S\ref{subsec:safety} 论证扩展后的管线仍保持 eBPF 的安全性。
 Figure~\ref{fig:pipeline} follows the \lang rotate through the pipeline with and without \tool, and serves as the running example.
 % 图展示了 \lang 的旋转操作在有无 \tool 时经过管线的过程，并作为贯穿全节的例子。
 
@@ -238,49 +240,84 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \label{subsec:pipeline}
 % 操作与编译管线
 
-Each \tool operation has two forms with the same semantics: a \emph{proof sequence} of vanilla eBPF and native code for each architecture.
-% 每个 \tool 操作有两种语义相同的形式：原生 eBPF 的\emph{证明序列}，以及针对某一架构的机器代码，即\emph{本地代码}。
-A program uses an operation through an \emph{extended instruction}, which each stage of the pipeline handles in turn: the recognizer creates it in userspace, the verifier checks its proof sequence in the kernel, and the JIT replaces it with its native code.
-% 程序通过\emph{扩展指令}使用操作，管线的各阶段依次处理它：识别器在用户空间生成它，验证器在内核中检查它的证明序列，JIT 用它的本地代码替换它。
-The same program therefore verifies as vanilla eBPF and runs as native code.
-% 因此同一程序作为原生 eBPF 验证，作为本地代码运行。
-
-In userspace, before the program loads, the recognizer matches the patterns of supported operations (\S\ref{subsec:llvm}) and rewrites each match into one or more extended instructions, each naming the operation and carrying its operands.
-% 在用户空间，程序加载之前，识别器匹配所支持操作的模式（\S\ref{subsec:llvm}），并把每处匹配改写为一条或多条扩展指令，每条指明操作并携带其操作数。
-In Figure~\ref{fig:pipeline}, it rewrites the shifts and bitwise OR of a 64-bit left rotate by 16 (\ding{172}) into an extended instruction whose operands name \texttt{r7} as source and destination and 16 as the rotate amount (\ding{173}).
-% 在图中，它把 64 位左旋 16 位的移位和按位或（①）改写为一条扩展指令，其操作数指定 r7 为源和目的、16 为旋转量（②）。
+An operation in \tool packages one computation in two forms with the same semantics: a \emph{proof sequence} of vanilla eBPF, which the verifier checks, and native code for each architecture, which the CPU runs.
+% \tool 中的一个操作把一项计算打包成两种语义相同的形式：由验证器检查的原生 eBPF \emph{证明序列}，以及由 CPU 运行的、每个架构上的本地代码。
+Giving the verifier a vanilla eBPF form, rather than new semantics for each operation, lets its existing analysis check every operation, and giving the CPU native code lets it run the computation directly.
+% 给验证器一个原生 eBPF 形式，而不是为每个操作添加新语义，使验证器现有的分析能检查每个操作；给 CPU 本地代码，使它能直接执行这项计算。
+A program refers to an operation through an \emph{extended instruction} that names the operation and carries its operands.
+% 程序通过\emph{扩展指令}引用操作，扩展指令指明操作并携带其操作数。
 Extended instructions are encoded with existing eBPF opcodes (\S\ref{subsec:kernel}), so \tool adds no new opcode.
 % 扩展指令用现有的 eBPF 操作码编码，因此 \tool 不添加新操作码。
+
+The pipeline handles an extended instruction in three stages, each using the form it needs: recognition in userspace, verification in the kernel, and code generation by the JIT.
+% 管线分三个阶段处理扩展指令，每个阶段使用它需要的那种形式：用户空间中的识别、内核中的验证，以及 JIT 的代码生成。
+In userspace, before the program loads, the recognizer matches the patterns of supported operations (\S\ref{subsec:llvm}) and rewrites each match into one or more extended instructions.
+% 在用户空间，程序加载之前，识别器匹配所支持操作的模式（\S\ref{subsec:llvm}），并把每处匹配改写为一条或多条扩展指令。
+In Figure~\ref{fig:pipeline}, it rewrites the shifts and bitwise OR of a 64-bit left rotate by 16 (\ding{172}) into an extended instruction whose operands name \texttt{r7} as source and destination and 16 as the rotate amount (\ding{173}).
+% 在图中，它把 64 位左旋 16 位的移位和按位或（①）改写为一条扩展指令，其操作数指定 r7 为源和目的、16 为旋转量（②）。
 
 In the kernel, each extended instruction is first replaced with its proof sequence, so the verifier's existing analysis sees only vanilla eBPF (\ding{174}).
 % 在内核中，每条扩展指令先被替换为它的证明序列，使验证器现有的分析只看到原生 eBPF（③）。
 Once the analysis accepts the program, the kernel restores the extended instructions for the JIT (\ding{175}).
-% 分析接受含证明序列的程序后，内核为 JIT 恢复扩展指令（④）。
+% 分析接受程序后，内核为 JIT 恢复扩展指令（④）。
 It restores them right after the analysis, so the steps that follow verification and prepare the program for the JIT handle each extended instruction as an ordinary instruction in existing opcodes.
 % 内核在分析结束后立即恢复它们，这样验证之后、为 JIT 准备程序的那些步骤会把每条扩展指令当作使用现有操作码的普通指令处理。
 Proof sequences can differ across architectures when an operation compiles to a different number of extended instructions on each (\S\ref{sec:lang}), but because every variant is vanilla eBPF checked by the same analysis, verification stays architecture-independent.
 % 当一个操作在不同架构上编译为不同数量的扩展指令时，证明序列也会不同，但由于每种变体都是由同一分析检查的原生 eBPF，验证保持与架构无关。
 
 During code generation, the JIT replaces each extended instruction with the operation's native code for the running architecture.
-% 在代码生成时，JIT 把每条扩展指令交给当前架构上该操作的本地代码。
+% 在代码生成时，JIT 用当前架构上该操作的本地代码替换每条扩展指令。
 For the rotate, it emits a single \texttt{ROL} on x86-64, here \texttt{rol r13, 16} with \texttt{r13} holding eBPF register \texttt{r7} (\ding{176}), or a single \texttt{ROR} on ARM64.
 % 对于旋转，它在 x86-64 上发射一条 ROL，这里是 rol r13, 16，r13 存放 eBPF 寄存器 r7（⑤）；在 ARM64 上发射一条 ROR。
+The same program thus verifies as vanilla eBPF and runs as native code.
+% 于是同一程序作为原生 eBPF 验证，作为本地代码运行。
 When an operation has no native code for the architecture, the extended instruction falls back to its proof sequence, which the JIT compiles as vanilla eBPF. Because the interpreter cannot run native code, a kernel without a JIT rejects programs that carry extended instructions.
-% 当操作在该架构上没有本地代码时，扩展指令回退到其证明序列，由 JIT 作为原生 eBPF 编译；由于解释器无法运行本地代码，没有 JIT 的内核会拒绝含扩展指令的程序。
+% 当操作在该架构上没有本地代码时，扩展指令回退到其证明序列，由 JIT 作为原生 eBPF 编译。由于解释器无法运行本地代码，没有 JIT 的内核会拒绝含扩展指令的程序。
 
 No stage depends on a particular operation: the kernel patch replaces, restores, and emits every extended instruction through one generic path (\S\ref{subsec:kernel}), and it changes neither the verifier's analysis nor how the JIT translates ordinary instructions.
 % 没有哪个阶段依赖于特定操作：内核补丁通过一条通用路径对所有扩展指令进行替换、恢复和发射，并且既不改变验证器的分析，也不改变 JIT 对普通指令的翻译。
 A new operation therefore needs only a pattern in the recognizer and one or more kernel modules that supply its proof sequence and native code.
 % 因此新操作只需要识别器中的一个模式，以及一个或多个提供其证明序列和本地代码的内核模块。
 
+\subsection{\lang: Hardware-Idiom Operations}
+\label{sec:lang}
+% \lang：硬件习语操作
+
+\lang is a first set of seven operations built on \tool, one for each hardware idiom that the eBPF instruction set has no single-instruction form for, such as rotate and conditional select.
+% \lang 是基于 \tool 构建的第一组七个操作，每个对应一个 eBPF 指令集中没有单指令形式的硬件习语，例如旋转和条件选择。
+Each operation covers the variants of its idiom, such as the 64-bit and 32-bit rotate.
+% 每个操作覆盖其习语的各种变体，例如 64 位和 32 位旋转。
+The seven are drawn from the networking, tracing, and security workloads that \S\ref{sec:characterization} studies, to cover the clearest losses it identifies.
+% 这七个操作取自 \S\ref{sec:characterization} 研究的网络、追踪和安全类工作负载，用来覆盖其中最明显的损失。
+Other workloads, such as schedulers, may need different instructions, which can be added as kernel modules without changing the kernel patch.
+% 其他工作负载（例如调度器）可能需要不同的指令，这些指令可以作为内核模块加入，而无需修改内核补丁。
+
+Table~\ref{tab:descriptors} lists the seven operations with their proof sequences and their native code on x86-64 and ARM64.
+% 表列出了这七个操作及其证明序列，以及它们在 x86-64 和 ARM64 上的本地代码。
+Six of them replace fixed bytecode patterns that the recognizer matches in place.
+% 其中六个替换识别器可以原地匹配的固定字节码模式。
+Only the prefetch has no eBPF equivalent, so the recognizer inserts it at sites it selects, with a no-op proof sequence.
+% 只有预取没有等价的 eBPF 代码，因此识别器在其选择的位置插入它，使用空操作证明序列。
+
+Native code differs across architectures in shape and in availability.
+% 本地代码在不同架构上的形状和可用性有所不同。
+A conditional select compiles to one extended instruction on x86-64, emitting the \texttt{CMP+CMOV} pair, and to two extended instructions on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
+% 条件选择在 x86-64 上编译为一条扩展指令，发射 CMP+CMOV 对，在 ARM64 上编译为两条扩展指令，一条发射 TST，一条发射 CSEL，因此识别器针对程序将要加载的架构进行重写。
+On ARM64, the byte swap of a loaded value splits the same way, into an \texttt{LDR} and a \texttt{REV}.
+% 在 ARM64 上，对加载值的字节交换以相同方式拆分为 LDR 和 REV。
+One operation, the address computation \texttt{LEA}, exists on x86-64 alone.
+% 一个操作，地址计算 LEA，仅存在于 x86-64。
+
+\input{tables/sec-3-descriptors}
+
 \subsection{Safety and the Trusted Computing Base}
 \label{subsec:safety}
-% 安全性与可信基
+% 安全性与可信计算基
 
-Safety rests on two arguments: the verifier checks everything \tool adds except an operation's native code, and that native code is proved to compute the same result as its proof sequence.
-% 安全性建立在两个论证之上：验证器检查 \tool 添加的除本地代码外的一切，而本地代码被证明与其证明序列计算相同的结果。
-For the first argument, \tool adds no operation-specific abstract semantics to the verifier.
-% 就第一点而言，\tool 没有给验证器添加任何特定于操作的抽象语义。
+We assume that programs and the recognizer may be buggy or malicious, while the kernel code that \tool adds, its patch and the operation modules, must be free of ordinary bugs like any other kernel code.
+% 我们假设程序和识别器可能有错甚至恶意，而 \tool 新增的内核代码（补丁和操作模块）与其他内核代码一样，必须没有普通的程序错误。
+Under this assumption, safety rests on two arguments: the verifier checks everything \tool adds except an operation's native code, and that native code is proved to compute the same result as its proof sequence.
+% 在这一假设下，安全性建立在两个论证之上：验证器检查 \tool 添加的除本地代码外的一切，而本地代码被证明与其证明序列计算相同的结果。
 Everything the recognizer and the kernel modules contribute reaches the verifier inside the program it checks, which the verifier re-checks on every load with the same analysis as for vanilla eBPF.
 % 识别器和模块贡献的一切都在替换后的程序内到达验证器，验证器每次加载时都用与原生 eBPF 相同的分析重新检查它。
 A faulty rewrite or proof sequence that violates safety therefore fails verification like any unsafe program.
@@ -346,33 +383,3 @@ The instruction models and register-preservation lemmas are shared across operat
 % 指令模型和寄存器保持引理在各操作之间共享，因此在已有架构上新增一个操作只需要它的规范和两个引理。
 Because each operation replaces only a small fragment of a program, its proof stays small.
 % 由于每个操作只替换程序中的一小片段，它的证明也很小。
-The Lean development has \note{[TBD]} lines and took \note{[TBD]} person-weeks to write.
-% Lean 开发共 [TBD] 行，编写耗时 [TBD] 人周。
-The artifact includes the Lean proofs and instructions for checking them.
-% artifact 包含 Lean 证明及其检查说明。
-
-\subsection{\lang: Hardware-Idiom Operations \note{Extended eBPF Bytecode?}}
-\label{sec:lang}
-% \lang：硬件习语操作
-
-Each \lang operation targets an idiom for which the eBPF instruction set has no single-instruction form, and covers the idiom's variants, such as the 64-bit and 32-bit rotate.
-% 每个 \lang 操作针对一个 eBPF 指令集中没有单指令形式的习语，并覆盖该习语的各种变体，例如 64 位和 32 位旋转。
-The seven operations are a first set, drawn from the networking, tracing, and security workloads that \S\ref{sec:characterization} studies to cover the clearest losses it identifies.
-% 这七个操作是第一组，取自 \S\ref{sec:characterization} 研究的网络、追踪和安全类工作负载，用来覆盖其中最明显的损失。
-Other workloads, such as schedulers, may need different instructions, which can be added as kernel modules without changing the kernel patch.
-% 其他工作负载（例如调度器）可能需要不同的指令，这些指令可以作为内核模块加入，而无需修改内核补丁。
-Six of the seven operations replace fixed bytecode patterns that the recognizer matches in place.
-% 七个操作中有六个替换识别器可以原地匹配的固定字节码模式。
-Only the prefetch has no eBPF equivalent, so the recognizer inserts it at sites it selects, with a no-op proof sequence.
-% 只有预取没有等价的 eBPF 代码，因此识别器在其选择的位置插入它，使用空操作证明序列。
-
-Native code differs across architectures in shape and in availability, as Table~\ref{tab:descriptors} shows for the seven operations on x86-64 and ARM64.
-% 本地代码在架构间的形状和可用性上有所不同，表展示了七个操作在 x86-64 和 ARM64 上的情况。
-A conditional select compiles to one extended instruction on x86-64, emitting the \texttt{CMP+CMOV} pair, and to two extended instructions on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
-% 条件选择在 x86-64 上编译为一条扩展指令，发射 CMP+CMOV 对，在 ARM64 上编译为两条扩展指令，一条发射 TST，一条发射 CSEL，因此识别器针对程序将要加载的架构进行重写。
-On ARM64, the byte swap of a loaded value splits the same way, into an \texttt{LDR} and a \texttt{REV}.
-% 与加载融合的字节交换在 ARM64 上以相同方式分割，成为 LDR 和 REV。
-One operation, the address computation \texttt{LEA}, exists on x86-64 alone.
-% 一个操作，地址计算 LEA，仅存在于 x86-64。
-
-\input{tables/sec-3-descriptors}
