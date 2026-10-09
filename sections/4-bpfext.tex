@@ -340,8 +340,12 @@ Trust in the proofs therefore rests on the instruction models, Lean itself, and 
 Neither instruction set is translated into the other; both are modeled in one Lean development and meet only in the specification.
 % 两套指令集之间没有相互翻译：两者在同一个 Lean 开发中建模，只在规范处相遇。
 Supporting a new architecture needs a model of its native instructions and proofs that its native emits compute the existing specifications; the lemmas for existing proof sequences carry over unchanged.
-The artifact includes the Lean proofs and instructions for checking them.
 % 支持新架构需要其本地指令的模型，以及证明其本地发射计算现有规范；已有证明序列的引理保持不变地复用。
+The instruction models and register-preservation lemmas are shared across operations, so a new operation on an existing architecture needs only its specification and its two lemmas.
+% 指令模型和寄存器保持引理在各操作之间共享，因此在已有架构上新增一个操作只需要它的规范和两个引理。
+The Lean development has \note{[TBD]} lines and took \note{[TBD]} person-weeks to write.
+% Lean 开发共 [TBD] 行，编写耗时 [TBD] 人周。
+The artifact includes the Lean proofs and instructions for checking them.
 % artifact 包含 Lean 证明及其检查说明。
 
 \subsection{\lang: Hardware-Idiom Operations}
