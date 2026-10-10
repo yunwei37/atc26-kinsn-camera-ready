@@ -27,15 +27,15 @@ CASES = [
 ]
 
 COLUMN_WIDTH_IN = 241.14 / 72.27  # \columnwidth of acmart sigplan
-HEIGHT_IN = 1.7
+HEIGHT_IN = 1.85
 THROUGHPUT_COLOR = "#4C78A8"
 COST_COLOR = "#D18F32"
 EDGE_COLOR = "#3a3a3a"
-Y_MIN, Y_MAX = 0.76, 1.31
+Y_MIN, Y_MAX = 0.76, 1.34
 
 plt.rcParams.update({
     "font.family": "DejaVu Sans",
-    "font.size": 6.5,
+    "font.size": 7.0,
     "axes.linewidth": 0.5,
     "xtick.major.width": 0.6,
     "ytick.major.width": 0.6,
@@ -61,8 +61,9 @@ def main() -> None:
             ax.bar(x + dx, value - Y_MIN, width, bottom=Y_MIN, color=color,
                    edgecolor=EDGE_COLOR, linewidth=0.35, zorder=2,
                    hatch="////" if native else None)
-            ax.text(x + dx, value + 0.003, f"{value:.3f}x", ha="center", va="bottom",
-                    fontsize=5.0, zorder=4,
+            # Nudge each label outward so neighboring labels do not touch.
+            ax.text(x + dx * 1.2, value + 0.003, f"{value:.3f}x", ha="center", va="bottom",
+                    fontsize=5.6, zorder=4,
                     bbox=dict(boxstyle="square,pad=0.05", facecolor="white", edgecolor="none"))
 
     ax.axhline(1.0, color="#555555", linestyle="--", linewidth=0.6, zorder=3)
@@ -70,7 +71,7 @@ def main() -> None:
     ax.set_yticks([0.8, 0.9, 1.0, 1.1, 1.2])
     ax.set_ylabel("Ratio to original eBPF")
     ax.set_xticks(centers)
-    ax.set_xticklabels([c[0] for c in CASES], linespacing=1.15)
+    ax.set_xticklabels([c[0] for c in CASES], linespacing=1.1, fontsize=6.6)
     ax.set_xlim(-0.55, 5.56)
 
     handles = [
@@ -78,7 +79,7 @@ def main() -> None:
         plt.Rectangle((0, 0), 1, 1, facecolor=COST_COLOR, edgecolor=EDGE_COLOR, linewidth=0.35),
     ]
     ax.legend(handles, ["Workload throughput ↑", "BPF cost ↓"], loc="upper center",
-              ncol=2, frameon=False, fontsize=5.8, handlelength=1.8, handleheight=0.7,
+              ncol=2, frameon=False, fontsize=6.8, handlelength=1.8, handleheight=0.7,
               columnspacing=2.0, borderaxespad=0.3)
 
     fig.tight_layout(pad=0.2)
