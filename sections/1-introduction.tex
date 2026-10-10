@@ -145,8 +145,8 @@ We therefore prove in Lean 4 that, for each operation, the native code computes 
 
 We implement \tool in Linux with a 929-line kernel patch.
 % 我们用一个 929 行的内核补丁在 Linux 中实现 \tool。
-Using \tool, we build \lang, a first set of seven hardware-idiom operations, including rotate, conditional select, and bit extract.
-% 借助 \tool，我们构建了 \lang，第一组七个硬件习语操作，包括旋转、条件选择和位提取。
+Using \tool, we build \lang (extended Kernel  Instructions), a first set of seven hardware-idiom operations that programs use like new eBPF instructions, including rotate, conditional select, and bit extract.
+% 借助 \tool，我们构建了 \lang，第一组七个硬件习语操作，程序像使用新的 eBPF 指令一样使用它们，包括旋转、条件选择和位提取。
 On microbenchmarks, \lang speeds up eBPF programs by 24\% on x86-64 and 22\% on ARM64 in geometric mean over the unmodified pipeline, recovering 42\% of the x86-64 gap to native code, and it shrinks native code by 12--23\%.
 % 在微基准测试上，\lang 相对未修改的管线使 eBPF 在 x86-64 上几何平均提速 24\%，在 ARM64 上提速 22\%，恢复了 x86-64 上与本地代码差距的 42\%，并使本地代码缩小 12--23\%。
 On production applications, it improves throughput by up to 12\%. The gains are smaller because a real datapath spends most of its time in helper calls, map accesses, and tail calls, which instruction selection cannot reach (\S\ref{sec:eval}).
@@ -162,5 +162,5 @@ We make the following contributions:
     \item We present \tool, an extension interface that adds new operations to the eBPF compilation pipeline while reusing the existing verifier for safety (\S\ref{sec:mechanism}).
     \item Using \tool, we build \lang, a set of seven hardware-idiom operations that the simple eBPF JIT emits directly (\S\ref{sec:lang}).
     \item We prove in Lean 4 that the native code of each \lang operation computes the same result as its proof sequence, extending the verifier's guarantee to that code (\S\ref{sec:formal-verification}).
-    \item Our implementation in the Linux kernel and userspace tooling (\S\ref{sec:implementation}) recovers 42\% of the x86-64 gap to native code (\S\ref{sec:eval}).
+    \item Our implementation in the Linux kernel and userspace tooling (\S\ref{sec:implementation}) recovers 42\% of the x86-64 gap to native code (\S\ref{sec:eval}).\footnote{The artifact, with the microbenchmarks, the \tool and \lang implementations, the Lean proofs, and instructions for reproducing the experiments, is available at \url{https://github.com/eunomia-bpf/bpf-benchmark}.}
 \end{itemize}
