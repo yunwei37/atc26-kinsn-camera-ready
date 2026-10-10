@@ -124,8 +124,8 @@ The verifier gains two steps around its existing analysis.
 % 验证器在其现有分析周围获得替换步骤和恢复步骤。
 Before the analysis, it replaces each \lang operation with the proof sequence from its module, records the original pair, and validates where the proof sequence sits.
 % 在分析之前，它用来自模块的证明序列替换每条操作，记录原始的指令对，并校验证明序列所在的位置。
-After the analysis succeeds, it uses the analysis's liveness results to check temporary registers and then restores the pairs.
-% 分析成功后，它利用分析得到的活性结果检查临时寄存器，然后恢复这些指令对。
+After the analysis succeeds, it restores the pairs.
+% 分析成功后，它恢复这些指令对。
 The x86-64 and ARM64 JIT backends each gain a case that decodes the sidecar payload and calls a function from the \lang operation's module that generates its native code for the running architecture.
 % x86-64 和 ARM64 JIT 后端各增加一个处理情况，解码伴随载荷并调用该操作对应运行架构的生成本地代码的函数。
 When a \lang operation has no native code for the architecture, the kernel rewrites the operation back to its proof sequence before the JIT runs.
@@ -141,8 +141,8 @@ The first, 2{,}126 lines in the LLVM eBPF backend, matches idioms during instruc
 % 第一条是 LLVM eBPF 后端中的选择器，它在指令选择时匹配习语，并发射调用和伴随以代替分解后的字节码；它增加了 2126 行。
 The second is a standalone userspace tool of 6{,}967 lines that matches idioms on already-compiled bytecode, covering programs the backend never sees or cannot match, such as those compiled by a separate toolchain.
 % 第二条是一个 6967 行的独立用户空间工具，在已编译的字节码上重新匹配习语，覆盖选择器看不到或无法匹配的程序，例如由其他工具链编译的程序。
-The recognizer checks that each rewrite preserves the program's semantics, and the kernel checks whether a temporary register is read afterward (\S\ref{subsec:safety}).
-% 识别器检查每次改写都保持程序语义，内核则检查临时寄存器之后是否被读取。
+The recognizer checks that each rewrite preserves the program's semantics.
+% 识别器检查每次改写都保持程序语义。
 A program built without the recognizer, or one whose idioms the recognizer does not match, produces the same vanilla eBPF bytecode and loads and runs as an ordinary eBPF program.
 % 不用识别器构建的程序，或识别器未匹配其习语的程序，产生相同的原生 eBPF 字节码，并作为普通 eBPF 程序加载和运行。
 

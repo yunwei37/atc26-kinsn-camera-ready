@@ -9,7 +9,7 @@
 \cmidrule(lr){3-4}
 Operation & Proof sequence & x86-64 & ARM64 \\
 \midrule
-Rotate & two shifts + or & \texttt{ROL} & \texttt{ROR} \\
+Rotate & $n$ one-bit rotations & \texttt{ROL} & \texttt{ROR} \\
 Conditional select & branch + move & \texttt{CMP+CMOV} & \texttt{TST+CSEL} \\
 Bit extract & shift + and & \texttt{BEXTR} & \texttt{UBFX} \\
 Byte swap & load + byte swap & \texttt{MOVBE} & \texttt{LDR+REV} \\
