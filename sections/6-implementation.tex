@@ -116,8 +116,8 @@ Within the pair, the call identifies the \lang operation, and the sidecar carrie
 
 Around this encoding, the patch adds a step before the verifier's analysis and one after it, and leaves the analysis itself unchanged.
 % 围绕这种编码，补丁在验证器分析之前和之后各加一步，分析本身保持不变。
-Before the analysis, it replaces each \lang operation with the proof sequence from its module, records the original pair, and validates where the proof sequence sits.
-% 在分析之前，它用来自模块的证明序列替换每个 \lang 操作，记录原始的指令对，并验证证明序列所处的位置。
+Before the analysis, it replaces each \lang operation with the proof sequence from its module, records the original pair, and validates that the proof sequence has a single entry and a single exit, as \S\ref{subsec:safety} requires.
+% 在分析之前，它用来自模块的证明序列替换每个 \lang 操作，记录原始的指令对，并按 \S\ref{subsec:safety} 的要求验证证明序列只有单一入口和单一出口。
 After the analysis succeeds, it restores the pairs.
 % 分析成功后，它恢复这些指令对。
 In the JIT, the x86-64 and ARM64 backends each gain a case that decodes the sidecar payload and calls a function from the \lang operation's module that generates its native code for the running architecture.
