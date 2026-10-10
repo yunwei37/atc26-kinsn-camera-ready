@@ -38,7 +38,7 @@ The ARM64 experiments run on an AWS t4g.small instance (2 vCPUs, 2\,GiB RAM, AWS
 These platforms cover both the microbenchmark suite and the production-application experiments.
 % 这些平台涵盖微基准测试套件和生产应用实验。
 For application comparisons, the original and \lang runs use the same kernel image and differ only in whether the loaded program uses \lang operations and in the \lang policy.
-% 对于匹配的应用比较，原版和 \lang 运行使用相同的内核镜像，仅在加载的程序是否使用 \lang 操作以及 \lang 策略上不同。
+% 对于应用比较，原版和 \lang 运行使用相同的内核镜像，仅在加载的程序是否使用 \lang 操作以及 \lang 策略上不同。
 
 \noindent\textbf{Measurement conventions.}
 % \paragraph{测量约定。}
@@ -202,7 +202,7 @@ In this experiment, each Cilium BPF program is compiled from the same C source a
 The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code and the path that loads it become part of the TCB.
 % 验证器仍在每次加载时检查 eBPF 证明序列，但两种编译结果之间的等价性是被信任的而非被证明的，因此应用的本地代码及加载它的路径成为 TCB 的一部分。
 Like the characterization's 1.57$\times$ microbenchmark gap, this measures how much faster native code runs than eBPF for real world applications.
-% 与特征分析中 1.57 倍的微基准差距一样，1.214 倍的上界衡量的是本地代码比 eBPF 快多少，只是这里测的是 Cilium 的完整数据路径，而不是孤立的微基准。
+% 与特征分析中 1.57 倍的微基准差距一样，这衡量的是在真实应用中本地代码比 eBPF 快多少。
 
 The in-kernel native experiment uses the same x86-64 KVM application setup as the Cilium \lang runs.
 % 内核内本地执行实验使用与 Cilium \lang 运行相同的 x86-64 KVM 应用配置。
