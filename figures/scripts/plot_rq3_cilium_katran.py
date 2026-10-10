@@ -27,7 +27,7 @@ CASES = [
 ]
 
 COLUMN_WIDTH_IN = 241.14 / 72.27  # \columnwidth of acmart sigplan
-HEIGHT_IN = 1.85
+HEIGHT_IN = 1.75
 THROUGHPUT_COLOR = "#4C78A8"
 COST_COLOR = "#D18F32"
 EDGE_COLOR = "#3a3a3a"
