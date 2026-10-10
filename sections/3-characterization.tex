@@ -143,8 +143,8 @@ The section closes with why the kernel should not host an optimizing compiler (\
 % \noindent\textbf{基准测试。}
 We use 27 microbenchmarks, listed in Table~\ref{tab:microbenchmarks}.
 % 我们使用 27 个微基准测试，见表。
-Twelve of them re-implement the core computation of programs in Katran~\cite{katran}, Cilium~\cite{cilium}, BCC~\cite{bcc}, bpftrace~\cite{bpftrace}, Tetragon~\cite{tetragon}, Tracee~\cite{tracee}, and the OpenTelemetry eBPF profiler~\cite{otelprofiler}. The other fifteen are synthetic programs for packet parsing, hashing, and search.
-% 其中 12 个复现了 Katran、Cilium、BCC、bpftrace、Tetragon、Tracee 和 OpenTelemetry eBPF profiler 中程序的核心计算；其余 15 个是用于包解析、哈希和搜索的合成程序。
+Twelve of them are modeled on programs in Katran~\cite{katran}, Cilium~\cite{cilium}, BCC~\cite{bcc}, bpftrace~\cite{bpftrace}, Tetragon~\cite{tetragon}, Tracee~\cite{tracee}, and the OpenTelemetry eBPF profiler~\cite{otelprofiler}: four re-implement one computation of the program (Katran's hash-based backend selection, BCC runqlat's logarithmic buckets, bpftrace's substring search, and Tracee's HTTP prefix detection), and the other eight perform the program's task with synthetic logic. The other fifteen are synthetic programs for packet parsing, hashing, and search.
+% 其中 12 个以 Katran、Cilium、BCC、bpftrace、Tetragon、Tracee 和 OpenTelemetry eBPF profiler 中的程序为原型：4 个复现了该程序中的一项计算（Katran 基于哈希的后端选择、BCC runqlat 的对数分桶、bpftrace 的子串搜索和 Tracee 的 HTTP 前缀检测），其余 8 个用合成逻辑完成该程序的同类任务；其余 15 个是用于包解析、哈希和搜索的合成程序。
 The benchmarks make no helper calls or map accesses, so each measurement isolates instruction execution.
 % 这些基准不调用辅助函数也不访问映射，因此每次测量只反映指令执行。
 The gap therefore reflects only how well the pipeline translates bytecode into machine code.
