@@ -188,7 +188,7 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \node[stepdot] at (.35,5.80) {};
 \node[font=\sffamily\fontsize{8}{9}\selectfont,anchor=west,inner sep=0pt] at (.82,5.80) {Kernel patch};
 \begin{scope}[yshift=0cm]
-\foreach \x/\n/\stage/\representation in {0/1/Input/eBPF bytecode,3.59/2/Rewritten/eBPF + operations,7.18/3/Checked/eBPF bytecode,10.77/4/Restored/eBPF + operations,14.36/5/x86-64/Native code} {
+\foreach \x/\n/\stage/\representation in {0/1/Input/eBPF bytecode,3.59/2/Rewritten/eBPF + \lang{},7.18/3/Checked/eBPF bytecode,10.77/4/Restored/eBPF + \lang{},14.36/5/x86-64/Native code} {
 \draw[draw=black!40,fill=white,line width=.55pt] (\x,.05) rectangle (\x+3.14,4.75);
 \node[productnumber] at (\x+.40,4.33) {\n};
 \node[panelheading] at (\x+.77,4.33) {\textbf{\stage}\\\representation};
