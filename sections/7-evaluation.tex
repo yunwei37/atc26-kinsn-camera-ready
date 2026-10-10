@@ -220,8 +220,8 @@ Cilium throughput improves by 1.214$\times$ over original eBPF (median of five 6
 
 The gain comes at the cost of a larger TCB.
 % 这一收益的代价是更大的 TCB。
-In the Cilium run, all 135 datapath programs are replaced with native code; only Cilium's startup feature probes run as eBPF.
-% 在 Cilium 运行中，全部 135 个数据路径程序都被替换为本地代码，只有 Cilium 启动时的特性探测程序仍以 eBPF 运行。
+In the Cilium run, all 62 programs loaded at measurement time run as native code; only Cilium's startup feature probes run as eBPF.
+% 在 Cilium 运行中，测量时加载的全部 62 个程序都以本地代码运行，只有 Cilium 启动时的特性探测程序仍以 eBPF 运行。
 The native code comes from 3 object files.
 % 这些本地代码来自 3 个目标文件。
 These numbers do not measure the TCB in lines of code, but they show how much native code the kernel must trust.
