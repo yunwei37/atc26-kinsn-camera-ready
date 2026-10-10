@@ -28,9 +28,9 @@ We answer four questions:
 % RQ4：\tool 与内核内原生上界相比如何？
 \end{itemize}
 
-\paragraph{Evaluation environment.}
+\noindent\textbf{Evaluation environment.}
 % \paragraph{评估环境。}
-\note{format inconsistent}
+% \note{[zhengjie] format inconsistent}
 We use two evaluation platforms.
 % 我们使用两个评估平台。
 The x86-64 experiments run in a KVM virtual machine with 8 vCPUs and 64\,GB RAM on an Intel Core Ultra 9 285K host, using Linux 7.0.0-rc2+.
@@ -42,12 +42,12 @@ These platforms cover both the microbenchmark suite and the production-applicati
 For matched application comparisons, the original and \lang runs use the same kernel image and differ only in whether the loaded program uses \lang operations and in the \lang policy.
 % 对于匹配的应用比较，原版和 \lang 运行使用相同的内核镜像，仅在加载的程序是否使用 \lang 操作以及 \lang 策略上不同。
 
-\paragraph{Measurement conventions.}
+\noindent\textbf{Measurement conventions.}
 % \paragraph{测量约定。}
 Unless otherwise stated, each experiment uses three measured runs and reports the median.
 % 除非另有说明，每个实验使用三次测量运行并报告中位数。
-Execution-time and throughput ratios are normalized to the original kernel JIT, so values above 1$\times$ indicate faster execution or higher throughput.
-% 执行时间和吞吐量比率归一化到原版内核 JIT，因此高于 1 倍的值表示更快的执行或更高的吞吐量。
+Execution-time and throughput ratios are normalized to the original eBPF JIT, so values above 1$\times$ indicate faster execution or higher throughput.
+% 执行时间和吞吐量比率归一化到原版eBPF JIT，因此高于 1 倍的值表示更快的执行或更高的吞吐量。
 BPF cost is the average run time of a BPF program per invocation, as reported by the kernel. BPF-cost ratios divide the \lang cost by the original cost, so values below 1$\times$ indicate lower cost.
 % BPF 成本是内核报告的 BPF 程序每次调用的平均运行时间；BPF 成本比率是 \lang 成本除以原版成本，因此低于 1 倍的值表示成本更低。
 We compute it from the kernel's per-program runtime statistics as the change in total run time divided by the change in run count, match programs across the two runs by name, type, and order of appearance, and drop programs that run fewer than 100 times in either run.
@@ -62,17 +62,17 @@ We compute it from the kernel's per-program runtime statistics as the change in 
 
 RQ1 evaluates how much \lang's hardware-idiom operations speed up the microbenchmarks.
 % RQ1 评估 \lang 的硬件习语操作使微基准加速多少。
-\lang reduces the size of the code the kernel JIT generates on both architectures: relative to the original kernel JIT, the code shrinks to 0.772$\times$ on x86-64 and 0.879$\times$ on ARM64, geometric mean reductions of 22.8\% and 12.1\%.
-% \lang 在两种架构上都减小了内核 JIT 生成的代码：相对原版内核 JIT，代码在 x86-64 上缩小到 0.772 倍，在 ARM64 上缩小到 0.879 倍，几何平均分别减少 22.8\% 和 12.1\%。
+\lang reduces the size of the code the eBPF JIT generates on both architectures: relative to the original eBPF JIT, the code shrinks to 0.772$\times$ on x86-64 and 0.879$\times$ on ARM64, geometric mean reductions of 22.8\% and 12.1\%.
+% \lang 在两种架构上都减小了eBPF JIT 生成的代码：相对原版eBPF JIT，代码在 x86-64 上缩小到 0.772 倍，在 ARM64 上缩小到 0.879 倍，几何平均分别减少 22.8\% 和 12.1\%。
 
 Figure~\ref{fig:eval-kinsn-micro} reports execution time.
 % 图报告了执行时间。
-On x86-64, \lang achieves a 1.242$\times$ geometric mean speedup over the original kernel JIT, reducing execution time by 19.47\%.
-% 在 x86-64 上，\lang 相对原版内核 JIT 取得 1.242 倍的几何平均加速，执行时间减少 19.47\%。
+On x86-64, \lang achieves a 1.242$\times$ geometric mean speedup over the original eBPF JIT, reducing execution time by 19.47\%.
+% 在 x86-64 上，\lang 相对原版eBPF JIT 取得 1.242 倍的几何平均加速，执行时间减少 19.47\%。
 On ARM64, \lang rewrites all 308 matched \emph{sites}, the places where the recognizer replaces an idiom with a \lang operation, and achieves a 1.222$\times$ geometric mean speedup over the 27 benchmarks, reducing execution time by 18.17\%.
 % 在 ARM64 上，\lang 改写了全部 308 个匹配的\emph{站点}（即识别器用操作替换习语的位置），在 27 个基准上取得 1.222 倍的几何平均加速，执行时间减少 18.17\%。
-On both architectures, every benchmark produces the same output as under the original kernel JIT.
-% 在两种架构上，每个基准的输出都与原版内核 JIT 下相同。
+On both architectures, every benchmark produces the same output as under the original eBPF JIT.
+% 在两种架构上，每个基准的输出都与原版eBPF JIT 下相同。
 On x86-64, the 1.242$\times$ speedup recovers 42\% of the characterization's 1.57$\times$ gap to native code $((1.242{-}1)/(1.57{-}1))$.
 % 在 x86-64 上，1.242 倍的加速追回了特征分析中与本地代码 1.57 倍差距的 42\%。
 
@@ -121,11 +121,11 @@ Cilium represents a large tail-call-heavy Kubernetes datapath, while Katran repr
 We measure end-to-end datapath throughput with BPF runtime statistics disabled to avoid measurement overhead.
 % 我们在关闭 BPF 运行时统计的情况下测量端到端数据路径吞吐量，以避免测量开销。
 
-\textbf{Cilium on x86-64.}
-\note{format inconsistent}
+\noindent\textbf{Cilium on x86-64.}
+% \note{[zhengjie] format inconsistent}
 % \textbf{x86-64 上的 Cilium。}
-On x86-64, the full \lang policy, which enables every \lang operation, improves Cilium's end-to-end datapath throughput by 1.074$\times$ over the original kernel JIT.
-% 在 x86-64 上，启用全部操作的完整 \lang 策略使 Cilium 的端到端数据路径吞吐量相对原版内核 JIT 提高到 1.074 倍。
+On x86-64, the full \lang policy, which enables every \lang operation, improves Cilium's end-to-end datapath throughput by 1.074$\times$ over the original eBPF JIT.
+% 在 x86-64 上，启用全部操作的完整 \lang 策略使 Cilium 的端到端数据路径吞吐量相对原版eBPF JIT 提高到 1.074 倍。
 It rewrites 4086 sites, and no site is skipped at load time and no errors are reported.
 % 它改写了 4086 个站点，加载时没有站点被跳过，也没有报告错误。
 The sites span five \lang operations: LEA accounts for 2346, byte swap for 766, bulk copy for 587, conditional select for 385, and bit extract for 2.
@@ -133,10 +133,10 @@ The sites span five \lang operations: LEA accounts for 2346, byte swap for 766, 
 \lang thus reaches real bytecode patterns in Cilium's production datapath.
 % 因此 \lang 能覆盖 Cilium 生产数据路径中的真实字节码模式。
 
-\textbf{Katran on ARM64.}
+\noindent\textbf{Katran on ARM64.}
 % \textbf{ARM64 上的 Katran。}
-On ARM64, a conservative \lang policy, which enables only rotate, bit extract, and conditional select, rewrites 21 sites and improves Katran's end-to-end throughput by 1.065$\times$ over the original kernel JIT.
-% 在 ARM64 上，一个保守的 \lang 策略改写 21 个站点，使 Katran 的端到端吞吐量相对原版内核 JIT 提高到 1.065 倍。
+On ARM64, a conservative \lang policy, which enables only rotate, bit extract, and conditional select, rewrites 21 sites and improves Katran's end-to-end throughput by 1.065$\times$ over the original eBPF JIT.
+% 在 ARM64 上，一个保守的 \lang 策略改写 21 个站点，使 Katran 的端到端吞吐量相对原版eBPF JIT 提高到 1.065 倍。
 Because a single hot XDP program dominates Katran's datapath, the result is easy to attribute: the program that \lang rewrites is the one on the critical path.
 % 由于 Katran 的数据路径由单个热 XDP 程序主导，结果很容易归因：被 \lang 改写的程序正是关键路径上的程序。
 

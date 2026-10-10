@@ -16,8 +16,8 @@
 \label{sec:conclusion}
 % 结论
 
-We presented \tool, an extension interface that extends the eBPF compilation pipeline with new operations the kernel JIT emits directly.
-% 我们提出了 \tool，一种通过内核 JIT 直接发射的新操作扩展 eBPF 编译管线的扩展接口。
+We presented \tool, an extension interface that extends the eBPF compilation pipeline with new operations the eBPF JIT emits directly.
+% 我们提出了 \tool，一种通过eBPF JIT 直接发射的新操作扩展 eBPF 编译管线的扩展接口。
 Each operation has a proof sequence that the existing verifier checks on every load and native code that the CPU runs.
 % 每个操作有一个现有验证器在每次加载时检查的证明序列和一个 CPU 运行的本地代码。
 Beyond the one-time kernel patch, the code that generates an operation's native code is the only code it adds to the TCB.

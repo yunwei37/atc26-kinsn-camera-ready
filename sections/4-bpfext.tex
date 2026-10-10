@@ -143,7 +143,7 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \node[regionlabel,anchor=base west] at (6.32,10.60) {Kernel};
 \node[component,fill=evopurple] (clang) at (2.25,9.375) {Clang};
 \node[component] (verifier) at (10.50,9.375) {eBPF verifier};
-\node[component,draw=evoedge,line width=.8pt] (jit) at (14.90,9.375) {Kernel JIT};
+\node[component,draw=evoedge,line width=.8pt] (jit) at (14.90,9.375) {eBPF JIT};
 \node[component,draw=evoedge,fill=white] (recognizer) at (4.55,7.00) {Compile-time\\recognizer};
 \node[component,fill=white] (expansion) at (7.90,7.00) {Proof\\sequence};
 \node[component,fill=white] (emitter) at (10.50,7.00) {Native\\code};
@@ -232,7 +232,7 @@ panelheading/.style={anchor=west,align=left,inner sep=0pt,font=\sffamily\fontsiz
 \end{tikzpicture}
 \endgroup
 \caption{Original eBPF and BPF-Ext compilation paths for a 64-bit left rotation by 16. Circled numbers link the BPF-Ext path to the code panels. Module callbacks use dotted arrows for calls and thin solid arrows for returned instruction sequences. The labeled box marks one use of the \lang rotate operation, which occupies two eBPF slots, an operand sidecar followed by a call (\S\ref{subsec:kernel}). The proof sequence adds a store and a load to preserve the temporary register \texttt{r6}. \texttt{fp} denotes the eBPF frame pointer, and gray code provides context.}
-\Description{Orange long-dashed arrows show the original eBPF compilation path, and dark blue solid arrows show the BPF-Ext path. Both pass through the same Clang, eBPF verifier, and kernel JIT components. Circled program representations one through five lie on the solid path and match the code panels below. Representation one enters the compile-time recognizer, which returns rewritten representation two. The kernel replaces operations with proof sequences to obtain representation three, verifies it, restores the operations to obtain representation four, and generates native representation five. The dashed path bypasses these additional steps and produces separate native code. The proof sequence and native code are adjacent within the kernel modules box. The JIT obtains the native code through an orthogonal connection.}
+\Description{Orange long-dashed arrows show the original eBPF compilation path, and dark blue solid arrows show the BPF-Ext path. Both pass through the same Clang, eBPF verifier, and eBPF JIT components. Circled program representations one through five lie on the solid path and match the code panels below. Representation one enters the compile-time recognizer, which returns rewritten representation two. The kernel replaces operations with proof sequences to obtain representation three, verifies it, restores the operations to obtain representation four, and generates native representation five. The dashed path bypasses these additional steps and produces separate native code. The proof sequence and native code are adjacent within the kernel modules box. The JIT obtains the native code through an orthogonal connection.}
 \label{fig:pipeline}
 \end{figure*}
 

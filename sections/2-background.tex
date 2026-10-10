@@ -93,8 +93,8 @@ The verifier then passes the program to the JIT.
 
 \noindent\textbf{JIT compilation.}
 % \noindent\textbf{JIT 编译。}
-The kernel JIT does almost no optimization.
-% 内核 JIT 几乎不做优化。
+The eBPF JIT does almost no optimization.
+% eBPF JIT 几乎不做优化。
 The kernel maintains one such JIT for each supported architecture.
 % 内核为每个支持的架构维护一个这样的 JIT。
 Translation proceeds one opcode at a time, with the eBPF registers \texttt{r0}--\texttt{r10} mapped to fixed native registers.
