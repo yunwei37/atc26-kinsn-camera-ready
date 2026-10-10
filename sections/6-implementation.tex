@@ -114,8 +114,8 @@ Within the pair, the call identifies the \lang operation, and the sidecar carrie
 
 % \input{tables/sec-5-encoding}
 
-Around this encoding, the patch adds a step before the verifier's analysis and one after it, and leaves the analysis itself unchanged.
-% 围绕这种编码，补丁在验证器分析之前和之后各加一步，分析本身保持不变。
+On top of this encoding, the patch adds a step before the verifier's analysis and one after it, and leaves the analysis itself unchanged.
+% 在这种编码之上，补丁在验证器分析之前和之后各加一步，分析本身保持不变。
 Before the analysis, it replaces each \lang operation with the proof sequence from its module, records the original pair, and validates that the proof sequence has a single entry and a single exit, as \S\ref{subsec:safety} requires.
 % 在分析之前，它用来自模块的证明序列替换每个 \lang 操作，记录原始的指令对，并按 \S\ref{subsec:safety} 的要求验证证明序列只有单一入口和单一出口。
 After the analysis succeeds, it restores the pairs.
@@ -135,8 +135,8 @@ The first, 2{,}126 lines in the LLVM eBPF backend, matches idioms during instruc
 % 第一条是 LLVM eBPF 后端中的选择器，它在指令选择时匹配习语，并发射调用和伴随以代替分解后的字节码；它增加了 2126 行。
 The second handles programs the backend never sees or cannot match, such as those compiled by a separate toolchain, with a standalone userspace tool of 6{,}967 lines that matches the same idioms on already-compiled bytecode.
 % 第二条路径处理后端看不到或无法匹配的程序，例如由其他工具链编译的程序，它是一个 6{,}967 行的独立用户空间工具，在已编译的字节码上匹配相同的习语。
-Although the recognizer lies outside the TCB, it checks that each rewrite preserves the program's semantics, since a wrong rewrite would still compute a wrong result.
-% 虽然识别器不在 TCB 之内，它仍会检查每次改写是否保持程序语义，因为错误的改写仍会算出错误的结果。
+Although the recognizer lies outside the TCB, it checks that each rewrite preserves the program's semantics, for example that a register the idiom overwrites is dead afterward, since a wrong rewrite would still compute a wrong result.
+% 虽然识别器不在 TCB 之内，它仍会检查每次改写是否保持程序语义，例如习语覆盖的寄存器在之后不再被使用，因为错误的改写仍会算出错误的结果。
 A program built without the recognizer, or one whose idioms the recognizer does not match, produces the same vanilla eBPF bytecode and loads and runs as an ordinary eBPF program, so programs can adopt \tool one at a time.
 % 不经识别器构建的程序，或识别器没有匹配到习语的程序，产生相同的原生 eBPF 字节码，并作为普通 eBPF 程序加载和运行，因此程序可以逐个采用 \tool。
 
@@ -146,8 +146,8 @@ A program built without the recognizer, or one whose idioms the recognizer does 
 
 Each \lang operation is packaged as one or more loadable kernel modules, separate from the kernel patch, so operations can be added without rebuilding the kernel.
 % 每个 \lang 操作打包为一个或多个可加载内核模块，与内核补丁分离，因此添加操作无需重新构建内核。
-A module supplies a function that produces the proof sequence and one per architecture that generates the native code, and exports a kfunc in BTF. The call in each pair names the operation through this kfunc.
-% 模块提供一个生成证明序列的函数，以及每个架构一个生成本地代码的函数，并在 BTF 中导出一个 kfunc；每对指令中的 call 通过这个 kfunc 指明操作。
+A module supplies a function that produces the proof sequence and one per architecture that generates the native code, and exports a stub kfunc in BTF. The call in each pair names the operation through this kfunc.
+% 模块提供一个生成证明序列的函数，以及每个架构一个生成本地代码的函数，并在 BTF 中导出一个桩 kfunc；每对指令中的 call 通过这个 kfunc 指明操作。
 
 The module tree holds 14 modules on x86-64 and 11 on ARM64, 9{,}765 lines in all, including shared helper headers, test-only modules, and operations beyond \lang's seven (Table~\ref{tab:descriptors}).
 % 模块树在 x86-64 上有 14 个模块，在 ARM64 上有 11 个，共 9765 行，包括共享辅助头文件、仅测试模块和超出 \lang 七个的操作。
@@ -158,7 +158,7 @@ Each such function has a few dozen lines and writes one or two machine instructi
 
 Adding a pattern for an existing operation changes only the userspace recognizer.
 % 为现有操作添加模式只修改用户空间识别器。
-A new operation also needs a kernel module with parameter checks, a function that produces its proof sequence, functions that generate its native code, and registration, as well as its Lean proof (\S\ref{sec:formal-verification}). Such a module is small, the ARM64 bit-extract module, for example, has 76 lines.
+A new operation also needs a kernel module with parameter checks, a function that produces its proof sequence, functions that generate its native code, and registration, as well as its Lean proof (\S\ref{sec:formal-verification}). Such a module is small. The ARM64 bit-extract module, for example, has 76 lines.
 % 新操作还需要一个包含参数检查、生成证明序列的函数、生成本地代码的函数和注册代码的内核模块，以及它的 Lean 证明。这样的模块很小，例如 ARM64 位提取模块只有 76 行。
 Its proof joins a Lean development of 9{,}047 lines, which took about two person-days to write with help from Codex (GPT-6.1-Sol), and the artifact includes the proofs and instructions for checking them.
 % 它的证明加入一个 9{,}047 行的 Lean 开发，这个开发在 Codex（GPT-6.1-Sol）的帮助下花了大约两个人日写成，制品中包含这些证明及检查它们的说明。
