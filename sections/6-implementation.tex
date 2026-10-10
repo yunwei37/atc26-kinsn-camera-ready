@@ -152,8 +152,8 @@ A program built without the recognizer, or one whose idioms the recognizer does 
 
 Each \lang operation is packaged as one or more kernel modules, separate from the kernel patch.
 % 每个操作打包为一个或多个内核模块，与内核补丁分开。
-A module supplies two kinds of functions for a \lang operation, one that produces its proof sequence and one per architecture that generates its native code, and registers both through two existing kernel facilities, BTF, the kernel's type metadata for eBPF objects, and kfuncs, kernel functions that eBPF programs may call.
-% 模块提供操作的证明序列函数及其生成本地代码的函数，并通过两个现有内核设施注册两者：BTF（内核对 eBPF 对象的类型元数据）和 kfunc（eBPF 程序可以调用的内核函数）。
+A module supplies two kinds of functions for a \lang operation, one that produces its proof sequence and one per architecture that generates its native code, and registers them as kfuncs, kernel functions that eBPF programs may call, described by BTF, the kernel's type metadata for eBPF objects.
+% 模块为一个 \lang 操作提供两类函数：一个生成证明序列，每个架构一个生成本地代码；并把它们注册为 kfunc（eBPF 程序可调用的内核函数），由 BTF（内核为 eBPF 对象提供的类型元数据）描述。
 \tool leaves an operation's size open: a proof sequence may span a few instructions or a larger part of the program within the rules of \S\ref{subsec:safety}.
 % \tool 对操作的大小开放：证明序列可以跨越几条指令，也可以是符合规则的整个区域。
 
