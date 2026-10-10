@@ -120,7 +120,7 @@ The call identifies the \lang operation, and the sidecar carries a packed 52-bit
 
 % \input{tables/sec-5-encoding}
 
-The verifier gains two steps around its existing analysis.
+The patch adds a step before the verifier's analysis and one after it, and leaves the analysis itself unchanged.
 % 验证器在其现有分析周围获得替换步骤和恢复步骤。
 Before the analysis, it replaces each \lang operation with the proof sequence from its module, records the original pair, and validates where the proof sequence sits.
 % 在分析之前，它用来自模块的证明序列替换每条操作，记录原始的指令对，并校验证明序列所在的位置。
