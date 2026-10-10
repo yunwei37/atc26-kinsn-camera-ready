@@ -1,7 +1,7 @@
 \begin{table*}[t]
 \centering
 \small
-\caption{Computational microbenchmarks used in Figure~\ref{fig:char-pure-percase}. Benchmarks with a citation re-implement the core computation of that production program; the other 15 are synthetic. The \texttt{cksum} and \texttt{tc\_cksum} programs perform the same computation with different eBPF program types.}
+\caption{Computational microbenchmarks used in Figure~\ref{fig:char-pure-percase}. Benchmarks with a citation re-implement the core computation of that production program; the other 15 are synthetic. Several synthetic benchmarks share a pattern with production eBPF code: checksum folding in Katran~\cite{katran,rfc1071}, Jenkins hash mixing in Cilium~\cite{cilium,jenkins2006lookup3}, Toeplitz hashing in QEMU~\cite{qemu_ebpf_rss,microsoft_rss_toeplitz}, bounded byte comparison in Pixie~\cite{pixie_prefix_compare}, VLAN parsing in Suricata~\cite{suricata_ebpf}, and switch and local-call dispatch in Tetragon~\cite{tetragon}. The \texttt{cksum} and \texttt{tc\_cksum} programs perform the same computation with different eBPF program types.}
 \label{tab:microbenchmarks}
 \renewcommand{\arraystretch}{1.08}
 \begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}ll@{\hspace{1.2em}}ll@{\hspace{1.2em}}ll@{}}
@@ -9,7 +9,7 @@
 \textbf{Benchmark} & \textbf{Computation} & \textbf{Benchmark} & \textbf{Computation} & \textbf{Benchmark} & \textbf{Computation} \\
 \midrule
 \texttt{bitmap} & Bit counting, mixing & \texttt{katran} & Hash-based selection~\cite{katran} & \texttt{sock\_lb} & Service selection~\cite{cilium} \\
-\texttt{bin\_search} & Sorted-rule binary search & \texttt{policy} & Nested conditions~\cite{cilium} & \texttt{tcpconn} & Connection filtering~\cite{bcc} \\
+\texttt{bin\_search} & Sorted-rule linear scan & \texttt{policy} & Nested conditions~\cite{cilium} & \texttt{tcpconn} & Connection filtering~\cite{bcc} \\
 \texttt{runqlat} & Logarithmic buckets~\cite{bcc} & \texttt{siphash} & SipHash-style mixing & \texttt{tetragon} & Process-event filtering~\cite{tetragon} \\
 \texttt{trace\_sw} & Switch dispatch & \texttt{bounds} & Bounds checks, reads & \texttt{otel} & Frame-record scan~\cite{otelprofiler} \\
 \texttt{cksum} & Checksum & \texttt{field} & Field reads, mixing & \texttt{ct\_nat} & Address rewriting~\cite{cilium} \\
