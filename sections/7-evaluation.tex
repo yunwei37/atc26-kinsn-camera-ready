@@ -203,8 +203,8 @@ In this experiment, each Cilium BPF program is compiled from the same C source a
 % 在这个实验中，每个 Cilium BPF 程序从同一份 C 源码沿两条路径编译：证明序列是验证器检查的普通 eBPF 字节码，本地代码是用 LLVM -O2 把同一源码直接编译成的本地代码。
 The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code and the path that loads it become part of the TCB.
 % 验证器仍在每次加载时检查 eBPF 证明序列，但两种编译结果之间的等价性是被信任的而非被证明的，因此应用的本地代码及加载它的路径成为 TCB 的一部分。
-The 2.358$\times$ upper bound is not comparable to the characterization's 1.57$\times$ microbenchmark gap, which measures microbenchmarks in isolation rather than Cilium's full datapath.
-% 2.358 倍的上界不能与特征分析中 1.57 倍的微基准差距直接比较，后者测的是孤立的微基准，而不是 Cilium 的完整数据路径。
+The 1.214$\times$ upper bound is not comparable to the characterization's 1.57$\times$ microbenchmark gap, which measures microbenchmarks in isolation rather than Cilium's full datapath.
+% 1.214 倍的上界不能与特征分析中 1.57 倍的微基准差距直接比较，后者测的是孤立的微基准，而不是 Cilium 的完整数据路径。
 
 We use Cilium for this upper-bound study because it is the same kind of datapath workload evaluated above.
 % 我们用 Cilium 做这项上界研究，因为它与上文评估的是同类数据路径工作负载。
@@ -213,17 +213,17 @@ The in-kernel native experiment uses the same x86-64 KVM application setup as th
 It is not a claim about Cilium control-plane throughput: it measures steady-state datapath throughput after endpoint setup, with runtime reload and regeneration controllers disabled and the Cilium agent paused during measured workload samples.
 % 它并不涉及 Cilium 控制面的吞吐量：它测量端点建立之后的稳态数据路径吞吐量，测量期间关闭了运行时重载和重新生成控制器，并暂停了 Cilium agent。
 
-Trusting the native code raises the performance ceiling considerably.
-% 信任本地代码会大幅提高性能上限。
-Cilium throughput improves by 2.358$\times$ over original eBPF, and BPF cost drops from 488.7~ns to 262.3~ns per run, 1.86$\times$ lower.
-% Cilium 吞吐量相对原版 eBPF 提高到 2.358 倍，BPF 成本从每次运行 488.7 ns 降到 262.3 ns，降低到原来的 1/1.86。
+Trusting the native code raises the performance ceiling.
+% 信任本地代码会提高性能上限。
+Cilium throughput improves by 1.214$\times$ over original eBPF (median of five 60-second samples), and BPF cost drops from 913.7~ns to 743.7~ns per run, 1.229$\times$ lower.
+% Cilium 吞吐量相对原版 eBPF 提高到 1.214 倍（五个 60 秒样本的中位数），BPF 成本从每次运行 913.7 ns 降到 743.7 ns，降低到原来的 1/1.229。
 
 The gain comes at the cost of a larger TCB.
 % 这一收益的代价是更大的 TCB。
-In the Cilium run, 113 programs are replaced with native code, and 22 programs that have no native version run as eBPF.
-% 在 Cilium 运行中，113 个程序被替换为本地代码，22 个没有本地版本的程序仍以 eBPF 运行。
-The native code comes from 8 object files.
-% 这些本地代码来自 8 个目标文件。
+In the Cilium run, all 135 datapath programs are replaced with native code; only Cilium's startup feature probes run as eBPF.
+% 在 Cilium 运行中，全部 135 个数据路径程序都被替换为本地代码，只有 Cilium 启动时的特性探测程序仍以 eBPF 运行。
+The native code comes from 3 object files.
+% 这些本地代码来自 3 个目标文件。
 These numbers do not measure the TCB in lines of code, but they show how much native code the kernel must trust.
 % 这些数字并不是以代码行数衡量的 TCB，但它们显示了内核必须信任多少本地代码。
 
@@ -233,8 +233,8 @@ Original eBPF is the most conservative: it trusts only the existing verifier and
 % 原版 eBPF 最保守：它只信任现有的验证器和 JIT，但要为有限的 eBPF 指令集付出代价。
 In-kernel native execution is the fastest but trusts the native code of whole programs and the path that loads it.
 % 内核内本地执行最快，但要信任整个程序的本地代码以及加载它的路径。
-\lang lies in between: its 1.074$\times$ Cilium throughput gain recovers 5.4\% of the gap to the 2.358$\times$ upper bound $((1.074{-}1)/(2.358{-}1))$, compared with 42\% on the microbenchmarks, because real datapaths spend most of their time in helpers, maps, and tail calls that \lang does not target.
-% \lang 介于两者之间：它在 Cilium 上 1.074 倍的吞吐量提升追回了与 2.358 倍上界之间差距的 5.4\%，而在微基准上是 42\%，因为真实数据路径的大部分时间花在 \lang 不针对的辅助函数、map 和尾调用上。
+\lang lies in between: its 1.074$\times$ Cilium throughput gain recovers 35\% of the gap to the 1.214$\times$ upper bound $((1.074{-}1)/(1.214{-}1))$, compared with 42\% on the microbenchmarks, because real datapaths spend most of their time in helpers, maps, and tail calls that \lang does not target.
+% \lang 介于两者之间：它在 Cilium 上 1.074 倍的吞吐量提升追回了与 1.214 倍上界之间差距的 35\%，而在微基准上是 42\%，因为真实数据路径的大部分时间花在 \lang 不针对的辅助函数、map 和尾调用上。
 \lang does not reach the upper bound, but it speeds up programs through a small set of \lang operations rather than trusting the native code of whole programs.
 % \lang 达不到上界，但它通过一小组由内核定义的操作来加速程序，而不必信任整个程序的本地代码。
 The added trust is correspondingly small.
