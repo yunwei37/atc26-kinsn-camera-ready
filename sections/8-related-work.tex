@@ -83,15 +83,15 @@ hXDP~\cite{brunella2020hxdp} extends the instruction set for FPGAs, but the veri
 % hXDP 为 FPGA 扩展了指令集，但验证器不检查这些新指令。
 Because the instruction set is now an IETF standard~\cite{rfc9669}, any revision is a standardization effort.
 % 由于指令集现已成为 IETF 标准，任何修订都是一项标准化工作。
-An operation added through \tool instead shows the verifier its full semantics through its proof sequence (\S\ref{subsec:pipeline}), and it ships as a kernel module with no instruction-set revision (\S\ref{subsec:descriptors}).
-% 而 \tool 的操作通过证明序列向验证器展示其完整语义，并以内核模块的形式发布，无需修订指令集。
+An operation added through \tool instead shows the verifier its full semantics through its proof sequence (\S\ref{subsec:pipeline}), and it ships as a kernel module and a recognizer pattern with no instruction-set revision (\S\ref{subsec:descriptors}).
+% 而 \tool 的操作通过证明序列向验证器展示其完整语义，并以内核模块加识别器模式的形式发布，无需修订指令集。
 
 \noindent\textbf{Kernel extension safety and verification.}
 % \noindent\textbf{内核扩展的安全与验证。}
 eBPF for Windows~\cite{windows-ebpf}, using the PREVAIL verifier~\cite{gershuni2019simple}, and Craun et al.~\cite{craun2023enabling} verify programs outside the kernel and load them as signed code.
 % eBPF for Windows（使用 PREVAIL 验证器）和 Craun 等人在内核之外验证程序，并以签名代码的形式加载。
-KFlex~\cite{dwivedi2024fast} enforces memory safety and termination with runtime checks, Rex~\cite{jia2025rex} replaces the verifier with safe Rust, and MOAT~\cite{lu2024moat} and SafeBPF~\cite{soo2024safebpf} add runtime isolation on top of the verifier's static checks.
-% KFlex 用运行时检查保证内存安全和终止性，Rex 用安全 Rust 取代验证器，MOAT 和 SafeBPF 在验证器的静态检查之上增加运行时隔离。
+KFlex~\cite{dwivedi2024fast} moves only the extension's own memory safety and termination to runtime checks, Rex~\cite{jia2025rex} replaces the verifier with safe Rust, and MOAT~\cite{lu2024moat} and SafeBPF~\cite{soo2024safebpf} add runtime isolation on top of the verifier's static checks.
+% KFlex 仅把扩展自身的内存安全和终止性移到运行时检查，Rex 用安全 Rust 取代验证器，MOAT 和 SafeBPF 在验证器的静态检查之上增加运行时隔离。
 With \tool, programs are still checked by the existing in-kernel verifier, and beyond \tool's kernel patch, the only code each operation adds to the TCB is the code that generates its native code (\S\ref{subsec:safety}).
 % 使用 \tool 时，程序仍由现有的内核验证器检查；除了 \tool 的内核补丁外，每个操作加入 TCB 的唯一代码是生成其本地代码的代码。
 CompCert~\cite{leroy2009formal} verifies a C compiler and Alive2~\cite{lopes2021alive2} validates LLVM optimizations, while Jitk~\cite{wang2014jitk}, Jitterbug~\cite{nelson2020specification}, JitSynth~\cite{vangeffen2020jitsynth}, and CertrBPF~\cite{yuan2022certrbpf} verify BPF JITs and interpreters.

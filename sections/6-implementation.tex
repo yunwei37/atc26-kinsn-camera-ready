@@ -92,14 +92,8 @@
 \label{sec:implementation}
 % 实现
 
-We implement \tool in three parts.
-% 我们分三部分实现 \tool。
-The kernel patch is a one-time change to the verifier and the JIT (\S\ref{subsec:kernel}).
-% 内核补丁是对验证器和 JIT 的一次性更改。
-A compile-time recognizer rewrites idioms in userspace before load (\S\ref{subsec:llvm}).
-% 编译时识别器在加载前在用户空间重写习语。
-Each \lang operation ships as one or more loadable kernel modules (\S\ref{subsec:descriptors}).
-% 每个操作作为一个或多个可加载内核模块发布。
+We implement \tool's three parts: the one-time kernel patch to the verifier and the JIT (\S\ref{subsec:kernel}), the compile-time recognizer that rewrites idioms in userspace before load (\S\ref{subsec:llvm}), and the operation modules that ship each \lang operation as one or more loadable kernel modules (\S\ref{subsec:descriptors}).
+% 我们实现 \tool 的三个部分：对验证器和 JIT 的一次性内核补丁（\S\ref{subsec:kernel}），在加载前于用户空间改写习语的编译时识别器（\S\ref{subsec:llvm}），以及把每个 \lang 操作作为一个或多个可加载内核模块发布的操作模块（\S\ref{subsec:descriptors}）。
 
 \subsection{Kernel Patch}
 \label{subsec:kernel}
@@ -109,25 +103,25 @@ The kernel patch adds 929 lines to the Linux kernel, broken down by component in
 % 内核补丁向 Linux 内核添加了 929 行，表按组件分解了总数。
 All of it is glue around the existing verifier and JIT: it leaves the verifier's analysis and the JIT's translation of ordinary instructions unchanged.
 % 这些代码全部是现有验证器和 JIT 外围的胶水代码：验证器的分析和 JIT 对普通指令的翻译都保持不变。
-In the bytecode, each \lang operation is a pair of instructions, a sidecar followed by a call.
-% 每条操作是一对指令：一个伴随，后面跟一个调用，如表所示。
-Both reuse existing eBPF opcodes, and a reserved \texttt{src\_reg} value marks the pair for \tool.
-% 两者都重用现有的 eBPF 操作码，保留的 src\_reg 值标记该对用于 \tool。
-The call identifies the \lang operation, and the sidecar carries a packed 52-bit payload with the operands.
-% 调用标识操作，伴随携带包含操作数的 52 位压缩载荷。
+To carry operations through this unchanged pipeline, the patch represents each \lang operation in the bytecode as a pair of instructions that reuse existing eBPF opcodes, a sidecar followed by a call.
+% 为了让操作经过这条未改动的流水线，补丁在字节码中把每个 \lang 操作表示为一对重用现有 eBPF 操作码的指令：一个 sidecar，后跟一个 call。
+A reserved \texttt{src\_reg} value marks the pair for \tool.
+% 一个保留的 src\_reg 值把这对指令标记为 \tool 所用。
+Within the pair, the call identifies the \lang operation, and the sidecar carries its operands in a packed 52-bit payload.
+% 在这对指令中，call 标识 \lang 操作，sidecar 用一个打包的 52 位载荷携带操作数。
 
 \input{tables/sec-5-kernel-loc}
 
 % \input{tables/sec-5-encoding}
 
-The patch adds a step before the verifier's analysis and one after it, and leaves the analysis itself unchanged.
-% 验证器在其现有分析周围获得替换步骤和恢复步骤。
+Around this encoding, the patch adds a step before the verifier's analysis and one after it, and leaves the analysis itself unchanged.
+% 围绕这种编码，补丁在验证器分析之前和之后各加一步，分析本身保持不变。
 Before the analysis, it replaces each \lang operation with the proof sequence from its module, records the original pair, and validates where the proof sequence sits.
-% 在分析之前，它用来自模块的证明序列替换每条操作，记录原始的指令对，并校验证明序列所在的位置。
+% 在分析之前，它用来自模块的证明序列替换每个 \lang 操作，记录原始的指令对，并验证证明序列所处的位置。
 After the analysis succeeds, it restores the pairs.
 % 分析成功后，它恢复这些指令对。
-The x86-64 and ARM64 JIT backends each gain a case that decodes the sidecar payload and calls a function from the \lang operation's module that generates its native code for the running architecture.
-% x86-64 和 ARM64 JIT 后端各增加一个处理情况，解码伴随载荷并调用该操作对应运行架构的生成本地代码的函数。
+In the JIT, the x86-64 and ARM64 backends each gain a case that decodes the sidecar payload and calls a function from the \lang operation's module that generates its native code for the running architecture.
+% 在 JIT 中，x86-64 和 ARM64 后端各增加一个分支，解码 sidecar 载荷，并调用 \lang 操作所在模块中为当前架构生成本地代码的函数。
 When a \lang operation has no native code for the architecture, the kernel rewrites the operation back to its proof sequence before the JIT runs.
 % 当操作没有该架构的生成本地代码的函数时，内核在 JIT 运行前将该处重写回其证明序列。
 
@@ -139,38 +133,32 @@ The recognizer rewrites a program's idioms into \lang operations before load, th
 % 识别器在加载前通过两条路径将程序的习语重写为操作。
 The first, 2{,}126 lines in the LLVM eBPF backend, matches idioms during instruction selection and emits the call and sidecar in place of the multi-instruction sequence.
 % 第一条是 LLVM eBPF 后端中的选择器，它在指令选择时匹配习语，并发射调用和伴随以代替分解后的字节码；它增加了 2126 行。
-The second is a standalone userspace tool of 6{,}967 lines that matches idioms on already-compiled bytecode, covering programs the backend never sees or cannot match, such as those compiled by a separate toolchain.
-% 第二条是一个 6967 行的独立用户空间工具，在已编译的字节码上重新匹配习语，覆盖选择器看不到或无法匹配的程序，例如由其他工具链编译的程序。
-The recognizer checks that each rewrite preserves the program's semantics.
-% 识别器检查每次改写都保持程序语义。
-A program built without the recognizer, or one whose idioms the recognizer does not match, produces the same vanilla eBPF bytecode and loads and runs as an ordinary eBPF program.
-% 不用识别器构建的程序，或识别器未匹配其习语的程序，产生相同的原生 eBPF 字节码，并作为普通 eBPF 程序加载和运行。
+The second handles programs the backend never sees or cannot match, such as those compiled by a separate toolchain, with a standalone userspace tool of 6{,}967 lines that matches the same idioms on already-compiled bytecode.
+% 第二条路径处理后端看不到或无法匹配的程序，例如由其他工具链编译的程序，它是一个 6{,}967 行的独立用户空间工具，在已编译的字节码上匹配相同的习语。
+Although the recognizer lies outside the TCB, it checks that each rewrite preserves the program's semantics, since a wrong rewrite would still compute a wrong result.
+% 虽然识别器不在 TCB 之内，它仍会检查每次改写是否保持程序语义，因为错误的改写仍会算出错误的结果。
+A program built without the recognizer, or one whose idioms the recognizer does not match, produces the same vanilla eBPF bytecode and loads and runs as an ordinary eBPF program, so programs can adopt \tool one at a time.
+% 不经识别器构建的程序，或识别器没有匹配到习语的程序，产生相同的原生 eBPF 字节码，并作为普通 eBPF 程序加载和运行，因此程序可以逐个采用 \tool。
 
 \subsection{Operation Modules}
 \label{subsec:descriptors}
 % 操作模块
 
-Each \lang operation is packaged as one or more kernel modules, separate from the kernel patch.
-% 每个操作打包为一个或多个内核模块，与内核补丁分开。
-A module supplies two kinds of functions for a \lang operation, one that produces its proof sequence and one per architecture that generates its native code, and registers them as kfuncs, kernel functions that eBPF programs may call, described by BTF, the kernel's type metadata for eBPF objects.
-% 模块为一个 \lang 操作提供两类函数：一个生成证明序列，每个架构一个生成本地代码；并把它们注册为 kfunc（eBPF 程序可调用的内核函数），由 BTF（内核为 eBPF 对象提供的类型元数据）描述。
-\tool leaves an operation's size open: a proof sequence may span a few instructions or a larger part of the program within the rules of \S\ref{subsec:safety}.
-% \tool 对操作的大小开放：证明序列可以跨越几条指令，也可以是符合规则的整个区域。
+Each \lang operation is packaged as one or more loadable kernel modules, separate from the kernel patch, so operations can be added without rebuilding the kernel.
+% 每个 \lang 操作打包为一个或多个可加载内核模块，与内核补丁分离，因此添加操作无需重新构建内核。
+A module supplies a function that produces the proof sequence and one per architecture that generates the native code, and exports a kfunc in BTF. The call in each pair names the operation through this kfunc.
+% 模块提供一个生成证明序列的函数，以及每个架构一个生成本地代码的函数，并在 BTF 中导出一个 kfunc；每对指令中的 call 通过这个 kfunc 指明操作。
 
-Each module covers one native instruction on one architecture, so a \lang operation that targets a single architecture contributes modules on that architecture only.
-% 每个模块覆盖一个架构上的一条本地指令，因此针对单一架构的操作只在该架构上贡献模块。
 The module tree holds 14 modules on x86-64 and 11 on ARM64, 9{,}765 lines in all, including shared helper headers, test-only modules, and operations beyond \lang's seven (Table~\ref{tab:descriptors}).
 % 模块树在 x86-64 上有 14 个模块，在 ARM64 上有 11 个，共 9765 行，包括共享辅助头文件、仅测试模块和超出 \lang 七个的操作。
 Of these lines, only the functions that generate native code affect the verifier's guarantee, since the functions that produce proof sequences emit bytecode that the verifier checks.
 % 这些代码中，只有生成本地代码的函数影响验证器的保证，因为生成证明序列的函数输出的字节码会被验证器检查。
-Each such function has a few dozen lines and writes one or two machine instructions, and we check that it writes exactly the instructions modeled in the Lean proofs.
-% 每个这样的函数有几十行，写出一两条机器指令，我们检查它恰好写出 Lean 证明中建模的指令。
-Re-verifying the program therefore cannot replace a review of this kernel code, which, like any kernel module, must be free of ordinary kernel bugs.
-% 因此重新验证程序不能代替对这些内核代码的审查，它们与任何内核模块一样，必须没有普通的内核错误。
+Each such function has a few dozen lines and writes one or two machine instructions, and we check that it writes exactly the instructions modeled in the Lean proofs. Because the verifier never sees what these functions write, re-verifying the program cannot replace a review of this kernel code, which, like any kernel module, must be free of ordinary kernel bugs.
+% 每个这样的函数只有几十行，写出一到两条机器指令，我们检查它写出的恰好是 Lean 证明中建模的指令。由于验证器看不到这些函数写出的内容，重新验证程序不能代替对这些内核代码的审查，它们与任何内核模块一样必须没有普通的内核错误。
 
 Adding a pattern for an existing operation changes only the userspace recognizer.
-% 为已有操作添加匹配模式只需修改用户空间识别器。
-A new operation also needs a kernel module with parameter checks, a function that produces its proof sequence, functions that generate its native code, and registration, as well as its Lean proof (\S\ref{sec:formal-verification}). The ARM64 bit-extract module, for example, has 76 lines.
-% 新操作还需要一个内核模块（包括参数检查、证明序列函数、生成本地代码的函数和注册）以及它的 Lean 证明；例如 ARM64 位提取模块有 76 行代码。
-The Lean development has 9,047 lines and took about two person-days to write with help from Codex (GPT-6.1-Sol), and the artifact includes the proofs and instructions for checking them.
-% Lean 开发共 9,047 行，在 Codex（GPT-6.1-Sol）的协助下编写约耗时两个人日；artifact 包含这些证明及其检查说明。
+% 为现有操作添加模式只修改用户空间识别器。
+A new operation also needs a kernel module with parameter checks, a function that produces its proof sequence, functions that generate its native code, and registration, as well as its Lean proof (\S\ref{sec:formal-verification}). Such a module is small, the ARM64 bit-extract module, for example, has 76 lines.
+% 新操作还需要一个包含参数检查、生成证明序列的函数、生成本地代码的函数和注册代码的内核模块，以及它的 Lean 证明。这样的模块很小，例如 ARM64 位提取模块只有 76 行。
+Its proof joins a Lean development of 9{,}047 lines, which took about two person-days to write with help from Codex (GPT-6.1-Sol), and the artifact includes the proofs and instructions for checking them.
+% 它的证明加入一个 9{,}047 行的 Lean 开发，这个开发在 Codex（GPT-6.1-Sol）的帮助下花了大约两个人日写成，制品中包含这些证明及检查它们的说明。
