@@ -249,8 +249,8 @@ An operation in \tool packages one computation in two forms with the same semant
 Giving the verifier a vanilla eBPF form, rather than new semantics for each operation, lets its existing analysis check every operation, and giving the CPU native code lets it run the computation directly.
 % 给验证器一个原生 eBPF 形式，而不是为每个操作添加新语义，使验证器现有的分析能检查每个操作；给 CPU 本地代码，使它能直接执行这项计算。
 % 程序通过\emph{操作}引用操作，操作指明操作并携带其操作数。
-A program uses an operation in place of the code it replaces, naming the operation and its operands.
-% 程序用操作替代它所替换的代码，并指明操作及其操作数。
+In a program, an operation takes the place of the code it replaces and names its operands.
+% 在程序中，操作取代它所替换的代码，并指明自己的操作数。
 
 To run such a program, the pipeline handles each operation in three stages, each using the form it needs: recognition in userspace, verification in the kernel, and code generation by the JIT.
 % 为运行这样的程序，管线分三个阶段处理每个操作，每个阶段使用它需要的形式：用户空间中的识别、内核中的验证，以及 JIT 的代码生成。
@@ -265,8 +265,8 @@ Once the analysis accepts the program, a second step after the analysis restores
 % 分析接受程序后，分析之后的第二步为 JIT 恢复这些操作（④）。
 It restores them right after the analysis, so the steps that follow verification and prepare the program for the JIT handle each operation as an ordinary eBPF instruction.
 % 内核在分析结束后立即恢复它们，这样验证之后、为 JIT 准备程序的那些步骤会把每条操作当作使用现有操作码的普通指令处理。
-Proof sequences can differ across architectures when an operation splits differently on each (\S\ref{sec:lang}), but because every variant is vanilla eBPF checked by the same analysis, verification stays architecture-independent.
-% 当一个操作在不同架构上编译为不同数量的操作时，证明序列也会不同，但由于每种变体都是由同一分析检查的原生 eBPF，验证保持与架构无关。
+Verification also stays architecture-independent: proof sequences can differ across architectures when an operation splits differently on each (\S\ref{sec:lang}), but every variant is vanilla eBPF checked by the same analysis.
+% 验证也因此与架构无关：当一个操作在不同架构上拆分方式不同时，证明序列会不同，但每种变体都是由同一分析检查的原生 eBPF。
 
 During code generation, one case that the kernel patch adds to the JIT replaces each operation with its native code for the running architecture.
 % 在代码生成时，内核补丁在 JIT 中加入的一个分支用当前架构上的本地代码替换每个操作。
@@ -277,8 +277,8 @@ The same program thus verifies as vanilla eBPF and runs as native code.
 When an operation has no native code for the architecture, it falls back to its proof sequence, which the JIT compiles as vanilla eBPF. Because the interpreter cannot run native code, a kernel without a JIT rejects programs that use operations.
 % 当操作在该架构上没有本地代码时，操作回退到其证明序列，由 JIT 作为原生 eBPF 编译。由于解释器无法运行本地代码，没有 JIT 的内核会拒绝含操作的程序。
 
-None of the three additions depends on a particular operation, and none changes the verifier's analysis or how the JIT translates ordinary instructions (\S\ref{subsec:kernel}).
-% 这三处新增都不依赖于特定操作，也都不改变验证器的分析或 JIT 对普通指令的翻译。
+The kernel patch thus adds three pieces, a step before the verifier's analysis, a step after it, and a case in the JIT, and none of them depends on a particular operation or changes the verifier's analysis or how the JIT translates ordinary instructions (\S\ref{subsec:kernel}).
+% 因此内核补丁只加了三处：验证器分析之前的一步、之后的一步，以及 JIT 中的一个分支；它们都不依赖于特定操作，也都不改变验证器的分析或 JIT 对普通指令的翻译。
 A new operation therefore needs only a pattern in the recognizer and one or more kernel modules that supply its proof sequence and native code.
 % 因此新操作只需要识别器中的一个模式，以及一个或多个提供其证明序列和本地代码的内核模块。
 
@@ -305,11 +305,11 @@ Only the prefetch has no eBPF equivalent, so the recognizer inserts it at sites 
 
 Native code differs across architectures in shape and in availability.
 % 本地代码在不同架构上的形状和可用性有所不同。
-A conditional select is one \lang operation on x86-64, emitting the \texttt{CMP+CMOV} pair, and splits into two \lang operations on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
+For example, a conditional select is one \lang operation on x86-64, emitting the \texttt{CMP+CMOV} pair, and splits into two \lang operations on ARM64, one emitting \texttt{TST} and one emitting \texttt{CSEL}, so the recognizer rewrites a program for the architecture it will load on.
 % 条件选择在 x86-64 上编译为一条操作，发射 CMP+CMOV 对，在 ARM64 上编译为两条操作，一条发射 TST，一条发射 CSEL，因此识别器针对程序将要加载的架构进行重写。
 On ARM64, the byte swap of a loaded value splits the same way, into an \texttt{LDR} and a \texttt{REV}.
 % 在 ARM64 上，对加载值的字节交换以相同方式拆分为 LDR 和 REV。
-One \lang operation, the address computation \texttt{LEA}, exists on x86-64 alone.
+As for availability, one \lang operation, the address computation \texttt{LEA}, exists on x86-64 alone.
 % 一个操作，地址计算 LEA，仅存在于 x86-64。
 
 \input{tables/sec-3-descriptors}
@@ -329,8 +329,8 @@ A faulty rewrite or proof sequence that violates safety therefore fails verifica
 Consequently, the userspace recognizer lies outside the TCB. A wrong rewrite is either rejected or yields a safe program that computes a different result.
 % 因此用户空间识别器在安全边界之外：错误的重写要么被拒绝，要么得到一个计算结果不同但安全的程序。
 
-The verifier checks the program with proof sequences, but the JIT compiles the program with the operations, so what the verifier proves about the first must also hold for the second.
-% 验证器检查的是含证明序列的程序，而 JIT 编译的是含操作的程序，因此验证器对前者证明的性质必须对后者同样成立。
+One gap remains in the first argument: the verifier checks the program with proof sequences, but the JIT compiles the program with the operations, so what the verifier proves about the first must also hold for the second.
+% 第一点论证还有一个缺口：验证器检查的是含证明序列的程序，而 JIT 编译的是含操作的程序，因此验证器对前者证明的性质必须对后者同样成立。
 When the operations are restored, each proof sequence in the program is replaced by its operation again, and nothing else changes.
 % \note{[zhengjie, Overleaf] on "proof region": isn't this just kinsns? -- the term proof region is now removed}
 % 恢复阶段将每个\emph{证明序列}重新被其操作替换，其他不变。
@@ -360,8 +360,8 @@ We model each eBPF and native instruction by its effect on registers and memory,
 We assume a proof sequence the verifier accepts and an initial state the verifier considers safe.
 % 证明假设证明序列已被验证器接受，且初始状态被验证器视为安全。
 
-The two forms meet in a hardware-independent specification of each operation.
-% 两种形式在每个操作的硬件无关规范处相遇。
+The proof connects the two forms through a hardware-independent specification of each operation.
+% 证明通过每个操作的一个与硬件无关的规范把两种形式联系起来。
 For the \lang rotate, the specification is $\operatorname{rotl}_{64}(x,n)=(x\ll n)\lor(x\gg(64-n))$ for $1\leq n<64$, over 64-bit bit-vectors with a logical right shift.
 % 对于旋转，规范是 64 位位向量上的 rotl64(x,n)=(x<<n)|(x>>(64-n))，1<=n<64，右移为逻辑右移。
 One lemma shows that the proof sequence, which rotates the destination register left by one bit $n$ times (a left shift by one that sets the low bit when the sign bit was set), leaves $\operatorname{rotl}_{64}(x,n)$ in its destination register, and a second lemma, one per architecture, shows the same for the native \texttt{ROL} on x86-64 and \texttt{ROR} (encoded as \texttt{EXTR}) on ARM64.
@@ -373,8 +373,8 @@ Each \lang operation is proved the same way.
 
 The proofs trust only the instruction models and Lean itself.
 % 这些证明只信任指令模型和 Lean 本身。
-Neither instruction set is translated into the other. Both are modeled in one Lean development and meet only in the specification, which need not be trusted, since the lemmas give equality whatever it says.
-% 两套指令集之间没有相互翻译，它们在同一个 Lean 开发中建模，只在规范处相遇；规范无需信任，因为无论规范是什么，引理都给出相等。
+No translation between the two instruction sets is needed: both are modeled in one Lean development and meet only in the specification, which need not be trusted, since the lemmas give equality whatever it says.
+% 两套指令集之间不需要任何翻译：它们在同一个 Lean 开发中建模，只在规范处相遇；规范无需信任，因为无论规范是什么，引理都给出相等。
 That the kernel writes exactly the modeled instructions is checked separately (\S\ref{subsec:descriptors}).
 % 内核是否恰好写出所建模的指令另行检查。
 An operation's developers check its proofs once, and those who deploy it trust its module as they would any other kernel module.
