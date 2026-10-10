@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 CASES = [
     ("Cilium\nFull\n4086 sites", 1.074, 1.010, False),
     ("Cilium\nNo Bulk\n3512 sites", 1.119, 1.062, False),
-    ("Cilium\nNative\nwhole program", 1.214, 0.814, True),
+    ("Cilium\nNative\nwhole program", 1.194, 0.704, True),
     ("Katran\nFull\n62 sites", 0.984, 1.006, False),
     ("Katran\nConservative\n21 sites", 1.065, 0.941, False),
 ]
@@ -31,7 +31,7 @@ HEIGHT_IN = 1.75
 THROUGHPUT_COLOR = "#4C78A8"
 COST_COLOR = "#D18F32"
 EDGE_COLOR = "#3a3a3a"
-Y_MIN, Y_MAX = 0.76, 1.34
+Y_MIN, Y_MAX = 0.64, 1.34
 
 plt.rcParams.update({
     "font.family": "DejaVu Sans",
@@ -68,7 +68,7 @@ def main() -> None:
 
     ax.axhline(1.0, color="#555555", linestyle="--", linewidth=0.6, zorder=3)
     ax.set_ylim(Y_MIN, Y_MAX)
-    ax.set_yticks([0.8, 0.9, 1.0, 1.1, 1.2])
+    ax.set_yticks([0.7, 0.8, 0.9, 1.0, 1.1, 1.2])
     ax.set_ylabel("Ratio to original eBPF")
     ax.set_xticks(centers)
     ax.set_xticklabels([c[0] for c in CASES], linespacing=1.1, fontsize=6.6)
