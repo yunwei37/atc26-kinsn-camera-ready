@@ -37,7 +37,7 @@ The ARM64 experiments run on an AWS t4g.small instance (2 vCPUs, 2\,GiB RAM, AWS
 % ARM64 实验在 AWS t4g.small 实例（2 个 vCPU，2 GiB RAM，AWS Graviton2）上运行，使用启用 \lang 的 Linux 7.0.0-rc2+ 构建。
 These platforms cover both the microbenchmark suite and the production-application experiments.
 % 这些平台涵盖微基准测试套件和生产应用实验。
-For matched application comparisons, the original and \lang runs use the same kernel image and differ only in whether the loaded program uses \lang operations and in the \lang policy.
+For application comparisons, the original and \lang runs use the same kernel image and differ only in whether the loaded program uses \lang operations and in the \lang policy.
 % 对于匹配的应用比较，原版和 \lang 运行使用相同的内核镜像，仅在加载的程序是否使用 \lang 操作以及 \lang 策略上不同。
 
 \noindent\textbf{Measurement conventions.}
@@ -63,10 +63,8 @@ RQ1 evaluates how much \lang's hardware-idiom operations speed up the microbench
 \lang reduces the size of the code the eBPF JIT generates on both architectures: relative to the original eBPF JIT, the code shrinks to 0.772$\times$ on x86-64 and 0.879$\times$ on ARM64, geometric mean reductions of 22.8\% and 12.1\%.
 % \lang 在两种架构上都减小了eBPF JIT 生成的代码：相对原版eBPF JIT，代码在 x86-64 上缩小到 0.772 倍，在 ARM64 上缩小到 0.879 倍，几何平均分别减少 22.8\% 和 12.1\%。
 
-Figure~\ref{fig:eval-kinsn-micro} reports execution time.
-% 图报告了执行时间。
-On x86-64, \lang achieves a 1.242$\times$ geometric mean speedup over the original eBPF JIT, reducing execution time by 19.47\%.
-% 在 x86-64 上，\lang 相对原版eBPF JIT 取得 1.242 倍的几何平均加速，执行时间减少 19.47\%。
+On x86-64, \lang achieves a 1.242$\times$ geometric mean speedup in execution time over the original eBPF JIT (Figure~\ref{fig:eval-kinsn-micro}), reducing execution time by 19.47\%.
+% 在 x86-64 上，\lang 相对原版 eBPF JIT 在执行时间上取得 1.242 倍的几何平均加速（图~\ref{fig:eval-kinsn-micro}），执行时间减少 19.47\%。
 On ARM64, \lang rewrites all 308 matched \emph{sites}, the places where the recognizer replaces an idiom with a \lang operation, and achieves a 1.222$\times$ geometric mean speedup over the 27 benchmarks, reducing execution time by 18.17\%.
 % 在 ARM64 上，\lang 改写了全部 308 个匹配的\emph{站点}（即识别器用操作替换习语的位置），在 27 个基准上取得 1.222 倍的几何平均加速，执行时间减少 18.17\%。
 On both architectures, every benchmark produces the same output as under the original eBPF JIT.
@@ -203,18 +201,12 @@ In this experiment, each Cilium BPF program is compiled from the same C source a
 % 在这个实验中，每个 Cilium BPF 程序从同一份 C 源码沿两条路径编译：证明序列是验证器检查的普通 eBPF 字节码，本地代码是用 LLVM -O2 把同一源码直接编译成的本地代码。
 The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code and the path that loads it become part of the TCB.
 % 验证器仍在每次加载时检查 eBPF 证明序列，但两种编译结果之间的等价性是被信任的而非被证明的，因此应用的本地代码及加载它的路径成为 TCB 的一部分。
-Like the characterization's 1.57$\times$ microbenchmark gap, the 1.214$\times$ upper bound measures how much faster native code runs than eBPF, here on Cilium's full datapath rather than on isolated microbenchmarks.
+Like the characterization's 1.57$\times$ microbenchmark gap, this measures how much faster native code runs than eBPF for real world applications.
 % 与特征分析中 1.57 倍的微基准差距一样，1.214 倍的上界衡量的是本地代码比 eBPF 快多少，只是这里测的是 Cilium 的完整数据路径，而不是孤立的微基准。
 
-We use Cilium for this upper-bound study because it is the same kind of datapath workload evaluated above.
-% 我们用 Cilium 做这项上界研究，因为它与上文评估的是同类数据路径工作负载。
 The in-kernel native experiment uses the same x86-64 KVM application setup as the Cilium \lang runs.
 % 内核内本地执行实验使用与 Cilium \lang 运行相同的 x86-64 KVM 应用配置。
-It is not a claim about Cilium control-plane throughput: it measures steady-state datapath throughput after endpoint setup, with runtime reload and regeneration controllers disabled and the Cilium agent paused during measured workload samples.
-% 它并不涉及 Cilium 控制面的吞吐量：它测量端点建立之后的稳态数据路径吞吐量，测量期间关闭了运行时重载和重新生成控制器，并暂停了 Cilium agent。
 
-Trusting the native code raises the performance ceiling.
-% 信任本地代码会提高性能上限。
 Cilium throughput improves by 1.214$\times$ over original eBPF (median of five 60-second samples, Figure~\ref{fig:app_policy_probes}), and BPF cost drops from 913.7~ns to 743.7~ns per run, a ratio of 0.814$\times$.
 % Cilium 吞吐量相对原版 eBPF 提高到 1.214 倍（五个 60 秒样本的中位数，图~\ref{fig:app_policy_probes}），BPF 成本从每次运行 913.7 ns 降到 743.7 ns，比值为 0.814 倍。
 
@@ -222,10 +214,6 @@ The gain comes at the cost of a larger TCB.
 % 这一收益的代价是更大的 TCB。
 In the Cilium run, all 62 programs loaded at measurement time run as native code. Only Cilium's startup feature probes run as eBPF.
 % 在 Cilium 运行中，测量时加载的全部 62 个程序都以本地代码运行。只有 Cilium 启动时的特性探测程序仍以 eBPF 运行。
-The native code comes from 3 object files.
-% 这些本地代码来自 3 个目标文件。
-These numbers do not measure the TCB in lines of code, but they show how much native code the kernel must trust.
-% 这些数字并不是以代码行数衡量的 TCB，但它们显示了内核必须信任多少本地代码。
 
 This places original eBPF, \tool with \lang, and in-kernel native execution at three points in the same design space.
 % 这样，原版 eBPF、带 \lang 的 \tool 和内核内本地执行就是同一设计空间中的三个点。
