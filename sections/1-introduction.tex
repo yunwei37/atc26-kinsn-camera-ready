@@ -155,12 +155,9 @@ The same interface also supports replacing whole programs with native code, whic
 % \note{[zhengjie] on "bounds what a larger TCB can buy": trade for?}
 % 同样的接口还支持整个程序的本地替换，在信任应用全部本地代码时在 Cilium 上达到 1.194 倍，从而给出了更大 TCB 所能换来的性能上限。
 
-\noindent\textbf{Contributions.}
-We make the following contributions:
+To summarize, we make the following contributions:
 \begin{itemize}
     \item We characterize the performance gap between eBPF and native code and attribute it to the eBPF JIT, with the clearest losses from hardware idioms (\S\ref{sec:characterization}).
-    \item We present \tool, an extension interface that adds new operations to the eBPF compilation pipeline while reusing the existing verifier for safety (\S\ref{sec:mechanism}).
-    \item Using \tool, we build \lang, a set of seven hardware-idiom operations that the simple eBPF JIT emits directly (\S\ref{sec:lang}).
-    \item We prove in Lean 4 that the native code of each \lang operation computes the same result as its proof sequence, extending the verifier's guarantee to that code (\S\ref{sec:formal-verification}).
+    \item We present \tool, an extension interface that adds new operations to the eBPF compilation pipeline (\S\ref{sec:mechanism}, and we build \lang, a set of seven hardware-idiom operations on top of it with lean 4 proves. (\S\ref{sec:lang}).
     \item Our implementation in the Linux kernel and userspace tooling (\S\ref{sec:implementation}) recovers 42\% of the x86-64 gap to native code (\S\ref{sec:eval}).\footnote{The artifact, with the microbenchmarks, the \tool and \lang implementations, the Lean proofs, and instructions for reproducing the experiments, is available at \url{https://github.com/eunomia-bpf/bpf-benchmark}.}
 \end{itemize}
