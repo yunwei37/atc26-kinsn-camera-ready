@@ -195,26 +195,25 @@ A cost model that combines program profiles with processor information could rep
 \subsection{RQ4: In-Kernel Native Upper Bound}
 \label{subsec:native_upper_bound}
 
-Unlike RQ1--RQ3, which evaluate \lang's operations, RQ4 uses \tool itself to replace whole Cilium programs with native code, placing \tool in a broader design space.
+URQ4 uses \tool itself to replace whole Cilium programs with native code.
 % 与评估 \lang 操作的 RQ1--RQ3 不同，RQ4 用 \tool 本身把整个 Cilium 程序替换为本地代码，把 \tool 放到更大的设计空间中考察。
+This measures how much faster native code runs than eBPF for real world applications.
+% 与特征分析中 1.57 倍的微基准差距一样，这衡量的是在真实应用中本地代码比 eBPF 快多少。
 In this experiment, each Cilium BPF program is compiled from the same C source along two paths: the proof sequence is the normal eBPF bytecode that the verifier checks, while the native code is the same source, with the same Cilium-generated configuration, compiled with LLVM \texttt{-O2} directly to native code.
 % 在这个实验中，每个 Cilium BPF 程序从同一份 C 源码沿两条路径编译：证明序列是验证器检查的普通 eBPF 字节码，本地代码是用 LLVM -O2 把同一源码（使用同一份由 Cilium 生成的配置）直接编译成的本地代码。
 The verifier still checks the eBPF proof sequence on every load, but the equivalence between the two compilations is trusted rather than proved, so the application's native code and the path that loads it become part of the TCB.
 % 验证器仍在每次加载时检查 eBPF 证明序列，但两种编译结果之间的等价性是被信任的而非被证明的，因此应用的本地代码及加载它的路径成为 TCB 的一部分。
-Like the characterization's 1.57$\times$ microbenchmark gap, this measures how much faster native code runs than eBPF for real world applications.
-% 与特征分析中 1.57 倍的微基准差距一样，这衡量的是在真实应用中本地代码比 eBPF 快多少。
+
 
 The in-kernel native experiment uses the same x86-64 KVM application setup as the Cilium \lang runs.
 % 内核内本地执行实验使用与 Cilium \lang 运行相同的 x86-64 KVM 应用配置。
-
-Cilium throughput improves by 1.194$\times$ over original eBPF (median over six fresh guests, three in each run order, Figure~\ref{fig:app_policy_probes}; two eBPF runs in one guest differ by a median 1.038$\times$), and BPF cost drops from 659.2~ns to 463.9~ns per run, a ratio of 0.704$\times$.
+Cilium throughput improves by 1.194$\times$ over original eBPF (Fig ~\ref{fig:app_policy_probes}), and BPF cost drops from 659.2~ns to 463.9~ns per run, a ratio of 0.704$\times$.
 % Cilium 吞吐量相对原版 eBPF 提高到 1.194 倍（六个全新启动的虚拟机的中位数，两种运行顺序各三个，图~\ref{fig:app_policy_probes}；同一虚拟机中两次 eBPF 运行之间的差异中位数为 1.038 倍），BPF 成本从每次运行 659.2 ns 降到 463.9 ns，比值为 0.704 倍。
 
 The gain comes at the cost of a larger TCB.
 % 这一收益的代价是更大的 TCB。
 In the Cilium run, all 51 live programs run as native code. Only Cilium's startup feature probes run as eBPF.
 % 在 Cilium 运行中，全部 51 个在用的程序都以本地代码运行。只有 Cilium 启动时的特性探测程序仍以 eBPF 运行。
-
 This places original eBPF, \tool with \lang, and in-kernel native execution at three points in the same design space.
 % 这样，原版 eBPF、带 \lang 的 \tool 和内核内本地执行就是同一设计空间中的三个点。
 Original eBPF is the most conservative: it trusts only the existing verifier and JIT but pays for the limited eBPF instruction set.
