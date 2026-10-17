@@ -62,7 +62,7 @@ def main() -> None:
                    edgecolor=EDGE_COLOR, linewidth=0.35, zorder=2,
                    hatch="////" if native else None)
             # Nudge each label outward so neighboring labels do not touch.
-            ax.text(x + dx * 1.2, value + 0.003, f"{value:.3f}x", ha="center", va="bottom",
+            ax.text(x + dx * 1.2, value + 0.003, f"{value:.3f}×", ha="center", va="bottom",
                     fontsize=5.6, zorder=4,
                     bbox=dict(boxstyle="square,pad=0.05", facecolor="white", edgecolor="none"))
 
