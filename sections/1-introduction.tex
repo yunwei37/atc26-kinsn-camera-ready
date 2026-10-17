@@ -158,6 +158,6 @@ The same interface also supports replacing whole programs with native code, whic
 To summarize, we make the following contributions:
 \begin{itemize}
     \item We characterize the performance gap between eBPF and native code and attribute it to the eBPF JIT, with the clearest losses from hardware idioms (\S\ref{sec:characterization}).
-    \item We present \tool, an extension interface that adds new operations to the eBPF compilation pipeline (\S\ref{sec:mechanism}, and we build \lang, a set of seven hardware-idiom operations on top of it with lean 4 proves. (\S\ref{sec:lang}).
+    \item We present \tool, an extension interface that adds new operations to the eBPF compilation pipeline (\S\ref{sec:mechanism}), and we build \lang, a set of seven hardware-idiom operations on top of it with Lean 4 proofs (\S\ref{sec:lang}).
     \item Our implementation in the Linux kernel and userspace tooling (\S\ref{sec:implementation}) recovers 42\% of the x86-64 gap to native code (\S\ref{sec:eval}).\footnote{The artifact, with the microbenchmarks, the \tool and \lang implementations, the Lean proofs, and instructions for reproducing the experiments, is available at \url{https://github.com/eunomia-bpf/bpf-benchmark}.}
 \end{itemize}

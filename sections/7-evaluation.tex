@@ -80,14 +80,14 @@ On x86-64, speedups follow code-size reduction more closely, consistent with \la
 % 在 x86-64 上，加速与代码大小的减少更为相关，这与 \lang 替换原版 JIT 的保守指令序列、执行更少指令一致。
 On ARM64, code size explains less: the largest gains appear where the recognizer rewrites rotates, bit extracts, and packet-field loads.
 % 在 ARM64 上，代码大小的解释力较弱：最大的收益出现在识别器改写旋转、位提取和包字段加载的地方。
-For example, \texttt{siphash\_rotate64\_\allowbreak mixer}, whose rewritten sites mostly emit extract instructions, reaches a 1.902$\times$ speedup on ARM64, and networking microbenchmarks such as Cilium socket load balancing, BCC TCP tuple filtering, and Cilium CT/NAT tuple rewriting reach 1.691$\times$, 1.624$\times$, and 1.482$\times$.
+For example, \texttt{siphash}, whose rewritten sites mostly emit extract instructions, reaches a 1.902$\times$ speedup on ARM64, and networking microbenchmarks such as Cilium socket load balancing, BCC TCP tuple filtering, and Cilium CT/NAT tuple rewriting reach 1.691$\times$, 1.624$\times$, and 1.482$\times$.
 % 例如，改写站点大多发射提取指令的 siphash\_rotate64\_mixer 在 ARM64 上达到 1.902 倍加速；Cilium 套接字负载均衡、BCC TCP 元组过滤和 Cilium CT/NAT 元组改写等网络微基准分别达到 1.691、1.624 和 1.482 倍。
 \lang is therefore not merely a code-size optimization. Its effect depends on the architecture, the original JIT's code, the \lang operations used, and whether the rewritten sites lie on hot paths.
 % 因此 \lang 不只是代码大小优化；其效果取决于架构、原版 JIT 的代码、所用的操作，以及改写站点是否位于热路径上。
 
 The regressions also show the current limits of the recognizer.
 % 性能回退也显示了识别器目前的局限。
-\texttt{bpftrace\_comm\_key\_fnv\_hash} slows to 0.862$\times$ on ARM64, and \texttt{bitmap\_popcount\_scan} slows to 0.966$\times$ even though \lang rewrites some of its sites.
+\texttt{fnv} slows to 0.862$\times$ on ARM64, and \texttt{bitmap} slows to 0.966$\times$ even though \lang rewrites some of its sites.
 % bpftrace\_comm\_key\_fnv\_hash 在 ARM64 上降到 0.862 倍，bitmap\_popcount\_scan 尽管有站点被 \lang 改写，也降到 0.966 倍。
 These cases indicate that \lang is not uniformly beneficial and that \lang operations should be enabled selectively, for example with a lightweight cost model, rather than at every matched site.
 % 这些情况说明 \lang 并非处处有益，应当有选择地启用操作（例如借助轻量的代价模型），而不是在每个匹配站点都启用。
@@ -195,9 +195,9 @@ A cost model that combines program profiles with processor information could rep
 \subsection{RQ4: In-Kernel Native Upper Bound}
 \label{subsec:native_upper_bound}
 
-URQ4 uses \tool itself to replace whole Cilium programs with native code.
+RQ4 uses \tool itself to replace whole Cilium programs with native code.
 % 与评估 \lang 操作的 RQ1--RQ3 不同，RQ4 用 \tool 本身把整个 Cilium 程序替换为本地代码，把 \tool 放到更大的设计空间中考察。
-This measures how much faster native code runs than eBPF for real world applications.
+This measures how much faster native code runs than eBPF for real-world applications.
 % 与特征分析中 1.57 倍的微基准差距一样，这衡量的是在真实应用中本地代码比 eBPF 快多少。
 In this experiment, each Cilium BPF program is compiled from the same C source along two paths: the proof sequence is the normal eBPF bytecode that the verifier checks, while the native code is the same source, with the same Cilium-generated configuration, compiled with LLVM \texttt{-O2} directly to native code.
 % 在这个实验中，每个 Cilium BPF 程序从同一份 C 源码沿两条路径编译：证明序列是验证器检查的普通 eBPF 字节码，本地代码是用 LLVM -O2 把同一源码（使用同一份由 Cilium 生成的配置）直接编译成的本地代码。
@@ -207,7 +207,7 @@ The verifier still checks the eBPF proof sequence on every load, but the equival
 
 The in-kernel native experiment uses the same x86-64 KVM application setup as the Cilium \lang runs.
 % 内核内本地执行实验使用与 Cilium \lang 运行相同的 x86-64 KVM 应用配置。
-Cilium throughput improves by 1.194$\times$ over original eBPF (Fig ~\ref{fig:app_policy_probes}), and BPF cost drops from 659.2~ns to 463.9~ns per run, a ratio of 0.704$\times$.
+Cilium throughput improves by 1.194$\times$ over original eBPF (Figure ~\ref{fig:app_policy_probes}), and BPF cost drops from 659.2~ns to 463.9~ns per run, a ratio of 0.704$\times$.
 % Cilium 吞吐量相对原版 eBPF 提高到 1.194 倍（六个全新启动的虚拟机的中位数，两种运行顺序各三个，图~\ref{fig:app_policy_probes}；同一虚拟机中两次 eBPF 运行之间的差异中位数为 1.038 倍），BPF 成本从每次运行 659.2 ns 降到 463.9 ns，比值为 0.704 倍。
 
 The gain comes at the cost of a larger TCB.

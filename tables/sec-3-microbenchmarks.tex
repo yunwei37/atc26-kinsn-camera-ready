@@ -15,7 +15,7 @@
 \texttt{cksum} & Checksum~\cite{katran,rfc1071} & \texttt{field} & Field reads, mixing & \texttt{ct\_nat} & Address rewriting~\cite{cilium} \\
 \texttt{memcmp} & Bytewise comparison~\cite{pixie_prefix_compare} & \texttt{bitfield} & Bit-field extraction & \texttt{toeplitz} & Toeplitz-style hashing~\cite{qemu_ebpf_rss,microsoft_rss_toeplitz} \\
 \texttt{vlan} & Packet-header parsing~\cite{suricata_ebpf} & \texttt{str\_search} & Substring search~\cite{bpftrace} & \texttt{fnv} & FNV-1a hashing~\cite{bpftrace} \\
-\texttt{call\_fanout} & Local-call dispatch~\cite{tetragon} & \texttt{syscall} & Syscall name lookup~\cite{tracee} & \texttt{tc\_cksum} & Checksum (TC)~\cite{katran,rfc1071} \\
+\texttt{call\_fanout} & Local-call dispatch~\cite{tetragon} & \texttt{syscall} & Syscall name lookup~\cite{tracee} & \texttt{tc\_cksum} & Checksum (tc)~\cite{katran,rfc1071} \\
 \texttt{5tuple} & Jenkins-style hashing~\cite{cilium,jenkins2006lookup3} & \texttt{http} & HTTP prefix detection~\cite{tracee} & \texttt{cgroup} & Hash mixing \\
 \bottomrule
 \end{tabular*}

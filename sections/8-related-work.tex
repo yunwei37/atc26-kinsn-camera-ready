@@ -64,7 +64,7 @@
 
 \noindent\textbf{eBPF optimization.}
 % \noindent\textbf{eBPF 优化。}
-Bytecode optimizers improve eBPF programs within the existing instruction set: K2~\cite{xu2021synthesizing} and EPSO~\cite{zhu2025epso} search for shorter bytecode through stochastic synthesis and offline superoptimization, Merlin~\cite{mao2024merlin} rewrites programs at the LLVM-IR and bytecode levels, and ePass~\cite{xiang2025epass} lifts bytecode into SSA form for program transformation.
+Bytecode optimizers improve eBPF programs within the existing instruction set: K2~\cite{xu2021synthesizing} and EPSO~\cite{zhu2025epso} search for shorter bytecode through stochastic synthesis and offline superoptimization, Merlin~\cite{mao2024merlin} rewrites programs at the LLVM IR and bytecode levels, and ePass~\cite{xiang2025epass} lifts bytecode into SSA form for program transformation.
 % 字节码优化器在现有指令集内改进 eBPF 程序：K2 和 EPSO 分别通过随机合成和离线超优化搜索更短的字节码，Merlin 在 LLVM-IR 和字节码级别重写程序，ePass 将字节码提升为 SSA 形式以进行程序转换。
 KFuse~\cite{kfuse} merges separately verified programs in the kernel, and Shahinfar et al.~\cite{shahinfar2026fun} compile verified programs to native code with a userspace optimizer. Both transform programs after verification, so the kernel must trust the transformation.
 % KFuse 在内核中合并分别验证过的程序，Shahinfar 等人用用户空间优化器把验证过的程序编译为本地代码；两者都在验证之后变换程序，因此内核必须信任这些变换。
