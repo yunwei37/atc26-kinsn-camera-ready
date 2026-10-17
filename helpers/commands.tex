@@ -8,12 +8,25 @@
 
 \newcommand{\citehere}[1][?]{  \textcolor{red}{[#1]}}
 
-\newtcolorbox[auto counter]{finding}[1][]{
-  enhanced, breakable, sharp corners,
-  fontupper=\normalfont\normalsize,
-  colback=black!4, colframe=black!75, boxrule=0.5pt,
-  left=2.2mm, right=2.2mm, top=1.4mm, bottom=1.4mm,
-  before skip=2.4mm, after skip=2.4mm,
-  #1,
-}
-\newcommand{\finlabel}{\textbf{Finding~\thetcbcounter:}\ }
+% Finding boxes use framed because TAPS does not accept tcolorbox. Colors,
+% rule, padding (3.2mm sides, 2.4mm top and bottom) and spacing match the
+% former tcolorbox style: the frame starts 2.4mm below the previous line's
+% descent, and the next line follows 2.4mm below the frame.
+\definecolor{findingback}{gray}{0.96}
+\definecolor{findingframe}{gray}{0.25}
+\newcounter{finding}
+\newcommand{\findingframe}[1]{%
+  \setlength{\fboxrule}{0.5pt}\setlength{\fboxsep}{2.4mm}%
+  \fcolorbox{findingframe}{findingback}{\hspace{0.8mm}#1\hspace{0.8mm}}}
+\newenvironment{finding}{%
+  \par\refstepcounter{finding}%
+  \ifdim\prevdepth<0pt
+    \setlength{\OuterFrameSep}{0.86pt}%
+  \else
+    \setlength{\OuterFrameSep}{\dimexpr\prevdepth+0.86pt\relax}%
+  \fi
+  \let\FrameCommand\findingframe
+  \MakeFramed{\advance\hsize-\width \FrameRestore}%
+  \setlength{\parindent}{0pt}}%
+  {\setlength{\OuterFrameSep}{2.4mm}\endMakeFramed\prevdepth=-1000pt\relax}
+\newcommand{\finlabel}{\textbf{Finding~\thefinding:}\ }
