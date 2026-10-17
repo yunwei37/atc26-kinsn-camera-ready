@@ -48,8 +48,11 @@ def ratio(v, _=None):
 
 def fig2(chars):
     """Figure 2: two panels, three non-baseline paths per benchmark."""
-    width_pt, height_pt = 1234.46, 709.7
-    panels = [(49.2, 276.2), (389.8, 616.9)]  # top and bottom of each axes, in pt
+    # The published layout let the long x labels of the top panel run into
+    # the bottom panel's legend; the revision moves the bottom panel down.
+    gap = 0 if ORIG else 14
+    width_pt, height_pt = 1234.46, 709.7 + gap
+    panels = [(49.2, 276.2), (389.8 + gap, 616.9 + gap)]  # top and bottom of each axes, in pt
     with plt.rc_context({'font.size': 18}):
         fig = plt.figure(figsize=(width_pt / 72, height_pt / 72))
         for (top, bottom), arch, label in zip(panels, ['x86', 'arm'], ['x86-64', 'ARM64']):
